@@ -1,10 +1,11 @@
 package com.example.agromo.login_ui
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.agromo.login_ui.components.PrimaryButton
 import com.example.agromo.login_ui.components.PasswordField
@@ -15,6 +16,8 @@ fun LoginScreen() {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
+
+    val customGreen = Color(0xFF317C42)
 
     Column(
         modifier = Modifier
@@ -42,16 +45,29 @@ fun LoginScreen() {
 
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = rememberMe,
-                    onCheckedChange = { rememberMe = it }
+                    onCheckedChange = { rememberMe = it },
+                    colors = CheckboxDefaults.colors(checkedColor = customGreen)
                 )
-                Text("Recuérdame")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Recuérdame",
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
             }
-            TextButton(onClick = { /* TODO */ }) {
+
+            TextButton(
+                onClick = { /* TODO */ },
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = customGreen
+                )
+            ) {
                 Text("Olvidé mi contraseña")
             }
         }
@@ -67,22 +83,20 @@ fun LoginScreen() {
 
         Row(
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("¿No tienes cuenta? ")
-            TextButton(onClick = { /* TODO */ }) {
+            Text("¿No tienes cuenta?")
+            Spacer(modifier = Modifier.width(6.dp))
+            TextButton(
+                onClick = { /* TODO */ },
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = customGreen
+                )
+            ) {
                 Text("Regístrate")
             }
         }
     }
-}
-
-@Composable
-fun TextFieldOutlined(
-    value: String,
-    onValueChange: () -> Unit,
-    label: String,
-    placeholder: String
-) {
-    TODO("Not yet implemented")
 }
