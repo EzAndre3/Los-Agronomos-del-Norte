@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.agromo.login_ui.ForgotPasswordScreen
 import com.example.agromo.login_ui.LoginScreen
 import com.example.agromo.login_ui.RegisterScreen
 import com.example.agromo.ui.theme.AgromoTheme
@@ -34,7 +35,8 @@ fun AppContent() {
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
             LoginScreen(
-                onNavigateToRegister = { navController.navigate("register") }
+                onNavigateToRegister = { navController.navigate("register") },
+                onNavigateToForgotPassword = { navController.navigate("forgot_password") }
             )
         }
         composable("register") {
@@ -42,5 +44,11 @@ fun AppContent() {
                 onBackToLogin = { navController.popBackStack() }
             )
         }
+        composable("forgot_password") {
+            ForgotPasswordScreen(
+                onBackToLogin = { navController.popBackStack() }
+            )
+        }
     }
 }
+

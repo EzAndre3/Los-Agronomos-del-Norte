@@ -13,7 +13,8 @@ import com.example.agromo.login_ui.components.TextFieldOutlined
 
 @Composable
 fun LoginScreen(
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -64,7 +65,7 @@ fun LoginScreen(
             }
 
             TextButton(
-                onClick = { /* TODO: Olvidé mi contraseña */ },
+                onClick = onNavigateToForgotPassword,
                 contentPadding = PaddingValues(0.dp),
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = customGreen
@@ -91,7 +92,7 @@ fun LoginScreen(
             Text("¿No tienes cuenta?")
             Spacer(modifier = Modifier.width(6.dp))
             TextButton(
-                onClick = onNavigateToRegister, // <-- aquí se navega
+                onClick = onNavigateToRegister, 
                 contentPadding = PaddingValues(0.dp),
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = customGreen
