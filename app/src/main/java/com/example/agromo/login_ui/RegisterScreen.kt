@@ -12,12 +12,13 @@ import com.example.agromo.login_ui.components.PasswordField
 import com.example.agromo.login_ui.components.TextFieldOutlined
 
 @Composable
-fun LoginScreen(
-    onNavigateToRegister: () -> Unit
+fun RegisterScreen(
+    onBackToLogin: () -> Unit
 ) {
+    var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
+    var confirmPassword by remember { mutableStateOf("") }
 
     val customGreen = Color(0xFF317C42)
 
@@ -27,6 +28,15 @@ fun LoginScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
+        TextFieldOutlined(
+            value = fullName,
+            onValueChange = { fullName = it },
+            label = "Nombre completo",
+            placeholder = "Ingresa tu nombre"
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         TextFieldOutlined(
             value = email,
             onValueChange = { email = it },
@@ -43,42 +53,22 @@ fun LoginScreen(
             placeholder = "Ingresa tu contraseña"
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = rememberMe,
-                    onCheckedChange = { rememberMe = it },
-                    colors = CheckboxDefaults.colors(checkedColor = customGreen)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Recuérdame",
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
-            }
-
-            TextButton(
-                onClick = { /* TODO: Olvidé mi contraseña */ },
-                contentPadding = PaddingValues(0.dp),
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = customGreen
-                )
-            ) {
-                Text("Olvidé mi contraseña")
-            }
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
+        PasswordField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            label = "Confirmar Contraseña",
+            placeholder = "Repite tu contraseña"
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         PrimaryButton(
-            text = "Iniciar Sesión",
-            onClick = { /* TODO: Lógica de login */ }
+            text = "Registrarse",
+            onClick = {
+                // TODO: Lógica de registro
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -88,16 +78,16 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("¿No tienes cuenta?")
+            Text("¿Ya tienes cuenta?")
             Spacer(modifier = Modifier.width(6.dp))
             TextButton(
-                onClick = onNavigateToRegister, // <-- aquí se navega
+                onClick = onBackToLogin,
                 contentPadding = PaddingValues(0.dp),
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = customGreen
                 )
             ) {
-                Text("Regístrate")
+                Text("Inicia Sesión")
             }
         }
     }
