@@ -23,6 +23,12 @@ fun ForgotPasswordScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
+        Text(
+            text = "Recuperar Contraseña",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
         TextFieldOutlined(
             value = email,
             onValueChange = { email = it },
@@ -33,7 +39,7 @@ fun ForgotPasswordScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         PrimaryButton(
-            text = "Enviar",
+            text = "Enviar enlace",
             onClick = { /* TODO: Lógica de recuperar contraseña */ }
         )
 

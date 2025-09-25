@@ -5,8 +5,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
+
 
 @Composable
 fun PasswordField(
@@ -24,8 +28,12 @@ fun PasswordField(
         placeholder = { Text(placeholder) },
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        textStyle = TextStyle(
+            color = Color.Black,
+            fontSize = 16.sp
+        ),
         trailingIcon = {
-            val icon = if (passwordVisible) "🙈" else "👁️"
+            val icon = if (passwordVisible) "👁️" else "👁️"
             TextButton(onClick = { passwordVisible = !passwordVisible }) {
                 Text(icon)
             }
