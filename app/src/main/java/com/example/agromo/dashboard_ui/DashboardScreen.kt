@@ -18,8 +18,10 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DashboardScreen(
-    onNavigateBackToLogin: () -> Unit
-    ,onNavigateToAiChat: () -> Unit) { // Modificado: Un solo parámetro lambda
+    onNavigateBackToLogin: () -> Unit,
+    onNavigateToAiChat: () -> Unit,
+    onNavigateToFormulario: () -> Unit   // 👈 nuevo
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -96,8 +98,9 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Botones principales con navegación
+
         Button(
-            onClick = { /* Lógica futura de navegación */ },
+            onClick = { onNavigateToFormulario() },  // 👈 navega al formulario
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth().height(60.dp)
