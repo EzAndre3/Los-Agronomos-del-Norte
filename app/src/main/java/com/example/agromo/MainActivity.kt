@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.agromo.aichat_ui.AiChatScreen
 import com.example.agromo.login_ui.ForgotPasswordScreen
 import com.example.agromo.login_ui.LoginScreen
 import com.example.agromo.login_ui.RegisterScreen
@@ -58,7 +59,8 @@ fun AppContent() {
                     navController.navigate("profile") {
                         popUpTo("dashboard") { inclusive = true } // Limpia el backstack al volver
                     }
-                }
+                },
+                onNavigateToAiChat = { navController.navigate("aichat") }
             )
         }
         composable("profile") {
@@ -76,6 +78,11 @@ fun AppContent() {
                         launchSingleTop = true
                     }
                 }
+            )
+        }
+        composable("aichat") {
+            AiChatScreen(
+                onNavigateBackToDashboard = { navController.navigate("dashboard") }
             )
         }
     }
