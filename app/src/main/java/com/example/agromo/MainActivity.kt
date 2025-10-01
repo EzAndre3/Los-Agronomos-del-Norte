@@ -15,6 +15,7 @@ import com.example.agromo.login_ui.ForgotPasswordScreen
 import com.example.agromo.login_ui.LoginScreen
 import com.example.agromo.login_ui.RegisterScreen
 import com.example.agromo.ui.theme.AgromoTheme
+import com.example.agromo.dashboard_ui.DashboardScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +37,8 @@ fun AppContent() {
         composable("login") {
             LoginScreen(
                 onNavigateToRegister = { navController.navigate("register") },
-                onNavigateToForgotPassword = { navController.navigate("forgot_password") }
+                onNavigateToForgotPassword = { navController.navigate("forgot_password") },
+                onNavigateToDashboard = { navController.navigate("dashboard") }
             )
         }
         composable("register") {
@@ -49,6 +51,14 @@ fun AppContent() {
                 onBackToLogin = { navController.popBackStack() }
             )
         }
+        composable("dashboard") {
+            DashboardScreen(
+                onNavigateBackToLogin = { // Modificado para coincidir con DashboardScreen
+                    navController.navigate("login") {
+                        popUpTo("dashboard") { inclusive = true } // Limpia el backstack al volver
+                    }
+                }
+            )
+        }
     }
 }
-

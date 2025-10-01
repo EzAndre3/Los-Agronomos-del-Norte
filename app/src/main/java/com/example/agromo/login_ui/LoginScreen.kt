@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit
+    onNavigateToForgotPassword: () -> Unit,
+    onNavigateToDashboard: () -> Unit // Nuevo parámetro para navegar al Dashboard
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -88,7 +89,10 @@ fun LoginScreen(
             text = "Iniciar Sesión",
             onClick = {
                 loginMessage = ""
+                // Simulación de inicio de sesión exitoso y navegación al dashboard
+                onNavigateToDashboard()
 
+                /*
                 scope.launch {
                     try {
                         // TODO: Se comenta la llamada a la API
@@ -104,6 +108,7 @@ fun LoginScreen(
                                 loginMessageColor = customGreen
                                 Log.d("LoginDebug", "Login exitoso, token: ${body.token}")
                                 // Aquí guardarías el token de forma segura
+                                onNavigateToDashboard() // Navegar al dashboard en caso de éxito
                             } else {
                                 loginMessage = body?.message ?: "Credenciales incorrectas"
                                 loginMessageColor = Color.Red
@@ -122,6 +127,7 @@ fun LoginScreen(
                         // Log.e("LoginDebug", "Error: ${e.message}")
                     }
                 }
+                */
             }
         )
 
