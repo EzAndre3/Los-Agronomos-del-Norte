@@ -14,7 +14,7 @@ fun PrimaryButton(
     text: String,
     onClick: () -> Unit
 ) {
-    val customGreen = Color(0xFF317C42)
+    val customGreen = Color(0xFF344E18)
 
     Button(
         onClick = onClick,

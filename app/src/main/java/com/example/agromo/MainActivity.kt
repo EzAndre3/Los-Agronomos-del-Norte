@@ -18,6 +18,7 @@ import com.example.agromo.login_ui.RegisterScreen
 import com.example.agromo.ui.theme.AgromoTheme
 import com.example.agromo.dashboard_ui.DashboardScreen
 import com.example.agromo.profile_ui.ProfileScreen
+import com.example.agromo.welcome_ui.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,7 +36,14 @@ class MainActivity : ComponentActivity() {
 fun AppContent() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "login") {
+    NavHost(navController = navController, startDestination = "welcome") {
+        composable("welcome") {
+            WelcomeScreen(
+                onRegisterClick = { navController.navigate("register") },
+                onLoginClick = { navController.navigate("login") }
+            )
+        }
+
         composable("login") {
             LoginScreen(
                 onNavigateToRegister = { navController.navigate("register") },

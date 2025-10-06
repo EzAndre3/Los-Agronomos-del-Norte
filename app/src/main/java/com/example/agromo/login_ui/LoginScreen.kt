@@ -1,46 +1,71 @@
 package com.example.agromo.login_ui
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.agromo.login_ui.components.PrimaryButton
 import com.example.agromo.login_ui.components.PasswordField
 import com.example.agromo.login_ui.components.TextFieldOutlined
-import com.example.agromo.model.LoginRequest
+
 //import com.example.agromo.network.ApiClient
-import kotlinx.coroutines.launch
+
 
 @Composable
 fun LoginScreen(
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
-    onNavigateToDashboard: () -> Unit // Nuevo parámetro para navegar al Dashboard
+    onNavigateToDashboard: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
 
-    var loginMessage by remember { mutableStateOf("") }
-    var loginMessageColor by remember { mutableStateOf(Color.Red) }
+    val email = viewModel.email
+    val password = viewModel.password
+    val rememberMe = viewModel.rememberMe
+    val loginMessage = viewModel.loginMessage
+    val loginMessageColor = viewModel.loginMessageColor
+    val isLoginSuccessful = viewModel.isLoginSuccessful
 
     val customGreen = Color(0xFF317C42)
-    val scope = rememberCoroutineScope()
+
+
+    LaunchedEffect(isLoginSuccessful) {
+        if (isLoginSuccessful) onNavigateToDashboard()
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Título de la app con degradado
+        Text(
+            text = "agromo",
+            fontSize = 36.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            style = LocalTextStyle.current.copy(
+                brush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF344E18), Color(0xFFA5BE00))
+                )
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(40.dp)) // Espacio entre título y formulario
         // Campo de correo
         TextFieldOutlined(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { viewModel.email = it },
             label = "Correo Electrónico",
             placeholder = "Ingresa tu correo"
         )
@@ -50,7 +75,7 @@ fun LoginScreen(
         // Campo de contraseña
         PasswordField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { viewModel.password = it },
             label = "Contraseña",
             placeholder = "Ingresa tu contraseña"
         )
@@ -66,7 +91,7 @@ fun LoginScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = rememberMe,
-                    onCheckedChange = { rememberMe = it },
+                    onCheckedChange = { viewModel.rememberMe = it },
                     colors = CheckboxDefaults.colors(checkedColor = customGreen)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -87,57 +112,15 @@ fun LoginScreen(
         // Botón de login
         PrimaryButton(
             text = "Iniciar Sesión",
-            onClick = {
-                loginMessage = ""
-                // Simulación de inicio de sesión exitoso y navegación al dashboard
-                onNavigateToDashboard()
-
-                /*
-                scope.launch {
-                    try {
-                        // TODO: Se comenta la llamada a la API
-                        /*
-                        // Enviar POST con body JSON
-                        val request = LoginRequest(email.trim(), password.trim())
-                        val response = ApiClient.apiService.login(request)
-
-                        if (response.isSuccessful) {
-                            val body = response.body()
-                            if (body != null && body.success) {
-                                loginMessage = body.message ?: "Inicio de sesión exitoso"
-                                loginMessageColor = customGreen
-                                Log.d("LoginDebug", "Login exitoso, token: ${body.token}")
-                                // Aquí guardarías el token de forma segura
-                                onNavigateToDashboard() // Navegar al dashboard en caso de éxito
-                            } else {
-                                loginMessage = body?.message ?: "Credenciales incorrectas"
-                                loginMessageColor = Color.Red
-                                Log.d("LoginDebug", "Login fallido para correo: $email")
-                            }
-                        } else {
-                            loginMessage = "Error: ${response.code()}"
-                            loginMessageColor = Color.Red
-                            Log.e("LoginDebug", "Error HTTP: ${response.code()}")
-                        }
-                        */
-
-                    } catch (e: Exception) {
-                        // loginMessage = "Error de conexión"
-                        // loginMessageColor = Color.Red
-                        // Log.e("LoginDebug", "Error: ${e.message}")
-                    }
-                }
-                */
-            }
+            onClick = { viewModel.login() }
         )
 
-        /*
-        // Mostrar mensaje de login
+        // Mostrar mensaje
         if (loginMessage.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = loginMessage, color = loginMessageColor)
         }
-        */
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // Registro
