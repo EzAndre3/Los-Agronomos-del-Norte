@@ -16,6 +16,7 @@ import com.example.agromo.ui.theme.AgromoTheme
 import com.example.agromo.dashboard_ui.DashboardScreen
 import com.example.agromo.profile_ui.ProfileScreen
 import com.example.agromo.login_ui.WelcomeScreen
+import com.example.agromo.formulario.RegistroFormularioScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,7 +66,13 @@ fun AppContent() {
                         popUpTo("dashboard") { inclusive = true } // Limpia el backstack al volver
                     }
                 },
-                onNavigateToAiChat = { navController.navigate("aichat") }
+                onNavigateToAiChat = { navController.navigate("aichat") },
+                onNavigateToFormulario = { navController.navigate("formulario") }
+            )
+        }
+        composable("formulario") {
+            RegistroFormularioScreen(
+                onBack = { navController.popBackStack() } // vuelve al dashboard
             )
         }
         composable("profile") {
