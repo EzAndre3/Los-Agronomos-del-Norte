@@ -1,21 +1,19 @@
-package com.example.agromo.welcome_ui
+package com.example.agromo.login_ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import com.example.agromo.general_components.LogoAgromo
 
 @Composable
 fun WelcomeScreen(
@@ -32,24 +30,12 @@ fun WelcomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Parte superior: título + recuadro descriptivo
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(top = 180.dp) // sección más abajo
+            modifier = Modifier.padding(top = 100.dp)
         ) {
-            // Título con degradado
-            Text(
-                text = "agromo",
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                style = LocalTextStyle.current.copy(
-                    brush = Brush.linearGradient(
-                        colors = listOf(Color(0xFF344E18), Color(0xFFA5BE00))
-                    )
-                )
-            )
+            LogoAgromo(size = 120.dp)
 
             // Mensaje descriptivo
             Box(
@@ -70,7 +56,7 @@ fun WelcomeScreen(
 
         // Parte inferior: botones
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp), // botones más pegados
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 80.dp)
@@ -87,8 +73,7 @@ fun WelcomeScreen(
                 Text(
                     text = "Quiero registrarme",
                     color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    fontSize = 16.sp
                 )
             }
 
@@ -105,8 +90,7 @@ fun WelcomeScreen(
                 Text(
                     text = "Ya tengo cuenta",
                     color = greenColor,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    fontSize = 16.sp
                 )
             }
         }
