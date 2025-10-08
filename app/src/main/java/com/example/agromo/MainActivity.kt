@@ -61,25 +61,21 @@ fun AppContent() {
         }
         composable("dashboard") {
             DashboardScreen(
-                onNavigateBackToLogin = { // Modificado para coincidir con DashboardScreen
-                    navController.navigate("profile") {
-                        popUpTo("dashboard") { inclusive = true } // Limpia el backstack al volver
-                    }
-                },
                 onNavigateToAiChat = { navController.navigate("aichat") },
-                onNavigateToFormulario = { navController.navigate("formulario") }
+                onNavigateToFormulario = { navController.navigate("formulario") },
+                onNavigateToProfile = { navController.navigate("profile") }
             )
         }
         composable("formulario") {
             RegistroFormularioScreen(
-                onBack = { navController.popBackStack() } // vuelve al dashboard
+                onBack = { navController.popBackStack() }
             )
         }
         composable("profile") {
             ProfileScreen(
                 onBack = {
                     navController.navigate("dashboard") {
-                        popUpTo("dashboard") { inclusive = true }  // asegura limpiar
+                        popUpTo("dashboard") { inclusive = true }
                         launchSingleTop = true
                     }
                 },
