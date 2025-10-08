@@ -68,7 +68,8 @@ fun AppContent() {
         }
         composable("formulario") {
             RegistroFormularioScreen(
-                onBack = { navController.popBackStack() }
+                onNext = { navController.popBackStack() }, // al finalizar
+                onBack = { navController.popBackStack() }  // si presiona la X o flecha en paso 0
             )
         }
         composable("profile") {
