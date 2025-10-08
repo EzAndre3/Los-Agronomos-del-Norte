@@ -8,7 +8,7 @@ object ApiClient {
 
     private const val BASE_URL = "https://api.ecoranger.org/"
     private const val TENANT = "agromo"
-    private const val API_KEY = "agromo-key-123"
+    private const val API_KEY = """
 
     // 🔹 Cliente HTTP básico con header x-api-key
     private val client = OkHttpClient.Builder()
