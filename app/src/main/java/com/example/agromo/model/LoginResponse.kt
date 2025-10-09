@@ -1,7 +1,12 @@
 package com.example.agromo.model
 
 data class LoginResponse(
-    val success: Boolean,
-    val token: String? = null,
-    val message: String? = null
+    val token: String?, // o el campo que devuelva la API
+    val user: UserData? // opcional, según el JSON real
+)
+
+data class UserData(
+    val id: Int?,
+    val name: String?,
+    val email: String?
 )
