@@ -6,7 +6,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agromo.general_components.LogoAgromo
 import com.example.agromo.login_ui.components.PrimaryButton
 import com.example.agromo.login_ui.components.PasswordField
@@ -15,15 +18,25 @@ import com.example.agromo.login_ui.components.PasswordField
 fun LoginScreen(
     onNavigateToDashboard: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    viewModel: LoginViewModel = viewModel() // 👈 Inyectamos el ViewModel
 ) {
-    // Estados locales temporales hasta integrar ViewModel
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
-    // var loginMessage by remember { mutableStateOf("") } // Para mostrar mensajes de login
+    val defaultGreen = Color(0xFF344E18)
 
-    val defaultGreen = Color(0xFF344E18) // Mismo verde que PrimaryButton
+    // Obtenemos los estados del ViewModel
+    val email by remember { viewModel::email }
+    val password by remember { viewModel::password }
+    val rememberMe by remember { viewModel::rememberMe }
+    val loginMessage by remember { viewModel::loginMessage }
+    val loginMessageColor by remember { viewModel::loginMessageColor }
+    val isLoginSuccessful by remember { viewModel::isLoginSuccessful }
+
+    // Si el login fue exitoso, navegamos
+    LaunchedEffect(isLoginSuccessful) {
+        if (isLoginSuccessful) {
+            onNavigateToDashboard()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -32,7 +45,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        //Logo Agromo
+        // Logo
         LogoAgromo(size = 120.dp)
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -40,18 +53,22 @@ fun LoginScreen(
         // Campo de correo
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { viewModel.email = it },
             label = { Text("Correo Electrónico") },
             placeholder = { Text("Ingresa tu correo") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(
+                color = Color.Black,
+                fontSize = 16.sp
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Campo de contraseña usando tu PasswordField
+        // Campo de contraseña
         PasswordField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { viewModel.password = it },
             label = "Contraseña",
             placeholder = "Ingresa tu contraseña"
         )
@@ -67,7 +84,7 @@ fun LoginScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = rememberMe,
-                    onCheckedChange = { rememberMe = it },
+                    onCheckedChange = { viewModel.rememberMe = it },
                     colors = CheckboxDefaults.colors(checkedColor = defaultGreen)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -88,20 +105,14 @@ fun LoginScreen(
         // Botón de login
         PrimaryButton(
             text = "Iniciar Sesión",
-            onClick = {
-                // Cuando se integre ViewModel, reemplazar con:
-                // viewModel.login()
-                onNavigateToDashboard()
-            }
+            onClick = { viewModel.login() }
         )
 
-        // Mostrar mensaje de login cuando se use ViewModel
-        /*
+        // Mostrar mensaje del login
         if (loginMessage.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = loginMessage, color = loginMessageColor)
         }
-        */
 
         Spacer(modifier = Modifier.height(16.dp))
 

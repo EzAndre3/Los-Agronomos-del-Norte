@@ -1,4 +1,4 @@
-/*package com.example.agromo.login_ui
+package com.example.agromo.login_ui
 
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
@@ -23,7 +23,7 @@ class LoginViewModel : ViewModel() {
         loginMessage = ""
         isLoginSuccessful = false
 
-        // 🔹 Validación básica de campos
+        // 🔹 Validación básica
         if (email.isBlank() || password.isBlank()) {
             loginMessage = "Ingresa usuario y contraseña"
             loginMessageColor = Color.Red
@@ -32,35 +32,30 @@ class LoginViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // 🔹 Crear request con los datos del usuario
+                // 🔹 Crear request con los datos correctos
                 val request = LoginRequest(
-                    username = email.trim(),
+                    user_email = email.trim(),
                     password = password.trim()
                 )
 
-                Log.d("LOGIN", "Iniciando login...")
-                Log.d("LOGIN", "Tenant: ${ApiClient.getTenant()}")
-                Log.d("LOGIN", "Username: ${request.username}")
+                Log.d("LOGIN", "Iniciando login con ${request.user_email}")
 
-                // 🔹 Llamada correcta al endpoint usando {tenant}
-                val response = ApiClient.apiService.login(
-                    ApiClient.getTenant(), // reemplaza {tenant} en la URL
-                    request                // cuerpo del login
-                )
+                // 🔹 Llamada al API
+                val response = ApiClient.apiService.loginUser(request)
 
-                // 🔹 Logs de respuesta
+                // 🔹 Logs para depurar
                 Log.d("LOGIN", "HTTP code: ${response.code()}")
                 Log.d("LOGIN", "isSuccessful: ${response.isSuccessful}")
                 Log.d("LOGIN", "Body: ${response.body()}")
                 Log.d("LOGIN", "ErrorBody: ${response.errorBody()?.string()}")
 
-                // 🔹 Manejo de la respuesta
-                if (response.isSuccessful && response.body()?.success == true) {
+                // 🔹 Manejo de respuesta
+                if (response.isSuccessful) {
                     loginMessage = "Inicio de sesión exitoso"
                     loginMessageColor = Color(0xFF317C42)
                     isLoginSuccessful = true
                 } else {
-                    loginMessage = response.body()?.message ?: "Credenciales incorrectas"
+                    loginMessage = "Credenciales incorrectas (${response.code()})"
                     loginMessageColor = Color.Red
                 }
 
@@ -72,4 +67,3 @@ class LoginViewModel : ViewModel() {
         }
     }
 }
-*/
