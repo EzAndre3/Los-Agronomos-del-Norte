@@ -56,7 +56,11 @@ fun DashboardScreen(
             WeatherCard(
                 location = weatherState.locationName,
                 temperature = weatherState.temperature,
-                description = weatherState.description
+                description = weatherState.description,
+                humidity = weatherState.humidity,
+                wind = weatherState.windSpeed,
+                rain = weatherState.precipitation,
+                sprayStatus = weatherState.sprayStatus
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -144,7 +148,11 @@ fun TopBarSection(onAvatarClick: () -> Unit) {
 fun WeatherCard(
     location: String,
     temperature: String,
-    description: String
+    description: String,
+    humidity: String,
+    wind: String,
+    rain: String,
+    sprayStatus: SprayStatus
 ) {
     Card(
         modifier = Modifier
@@ -207,14 +215,20 @@ fun WeatherCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                WeatherItem("Humedad", "48%", Icons.Filled.Water)
-                WeatherItem("Viento", "10 Km/h", Icons.Filled.Air)
-                WeatherItem("Lluvias", "22%", Icons.Filled.Cloud)
-                WeatherItem("Pulverización", "Desfavorable", Icons.Filled.Warning, Alert600P)
+                WeatherItem("Humedad", humidity, Icons.Filled.Water)
+                WeatherItem("Viento", wind, Icons.Filled.Air)
+                WeatherItem("Lluvias", rain, Icons.Filled.Cloud)
+                val (sprayText, sprayColor) = when(sprayStatus) {
+                    SprayStatus.FAVORABLE -> "Favorable" to Primary800P
+                    SprayStatus.UNFAVORABLE -> "Desfavorable" to Alert600P
+                    SprayStatus.UNKNOWN -> "--" to Color.Black
+                }
+                WeatherItem("Pulverización", sprayText, Icons.Filled.Warning, sprayColor)
             }
         }
     }
 }
+
 
 @Composable
 fun WeatherItem(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, valueColor: Color = Color.Black) {
