@@ -10,6 +10,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agromo.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +30,13 @@ fun DashboardScreen(
     onNavigateToAiChat: () -> Unit,
     onNavigateToFormulario: () -> Unit
 ) {
+    val viewModel: DashboardViewModel = viewModel()
+    val weatherState by viewModel.weatherState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadWeather()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -42,7 +53,11 @@ fun DashboardScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            WeatherCard()
+            WeatherCard(
+                location = weatherState.locationName,
+                temperature = weatherState.temperature,
+                description = weatherState.description
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -126,7 +141,11 @@ fun TopBarSection(onAvatarClick: () -> Unit) {
 
 
 @Composable
-fun WeatherCard() {
+fun WeatherCard(
+    location: String,
+    temperature: String,
+    description: String
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -149,18 +168,18 @@ fun WeatherCard() {
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Cuenca, Colombia",
+                        text = location,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = ColorBlackWhiteBlack
                     )
                     Text(
-                        text = "Lunes, 12PM, Parcialmente soleado",
+                        text = description,
                         fontSize = 10.sp,
                         color = Neutral500
                     )
                     Text(
-                        text = "23ºC",
+                        text = temperature,
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
