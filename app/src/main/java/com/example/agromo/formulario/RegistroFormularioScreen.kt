@@ -8,19 +8,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.agromo.formulario.data.FormularioEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,10 +30,17 @@ fun RegistroFormularioScreen(
     onNext: () -> Unit,
     onBack: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val repository = FormularioRepository(context)
+    val viewModel: FormularioListViewModel = viewModel(
+        factory = FormularioListViewModel.Factory(repository)
+    )
+
+
     val totalSteps = 7
     var step by remember { mutableStateOf(0) }
 
-    // Estados
+    // Estados de formulario
     var ubicacion by remember { mutableStateOf(TextFieldValue("")) }
     var usarUbicacionActual by remember { mutableStateOf(false) }
     var cultivoQuery by remember { mutableStateOf(TextFieldValue("")) }
@@ -40,7 +49,7 @@ fun RegistroFormularioScreen(
     var humedad by remember { mutableStateOf(TextFieldValue("")) }
 
     Scaffold(
-        containerColor = Color(0xFFFFFFFF),
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
                 title = { Text("Formulario de Monitoreo", fontSize = 18.sp) },
@@ -67,7 +76,18 @@ fun RegistroFormularioScreen(
         bottomBar = {
             Button(
                 onClick = {
-                    if (step < totalSteps - 1) step += 1 else onNext()
+                    if (step < totalSteps - 1) {
+                        step += 1
+                    } else {
+                        val nuevoFormulario = FormularioEntity(
+                            id = "FORM-${System.currentTimeMillis()}",
+                            ubicacion = ubicacion.text,
+                            cultivo = seleccionCultivos.joinToString(", "),
+                            humedad = humedad.text
+                        )
+                        viewModel.addFormulario(nuevoFormulario)
+                        onNext()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -114,14 +134,11 @@ fun RegistroFormularioScreen(
                         }
                     }
                 )
-                2 -> StepHumedad(
-                    humedad = humedad,
-                    onHumedadChange = { humedad = it }
-                )
+                2 -> StepHumedad(humedad = humedad, onHumedadChange = { humedad = it })
                 3 -> SteppH()
                 4 -> StepAltura()
                 5 -> StepFenologico()
-                6 -> StepFollaje()
+                6 -> StepFollaje() // Si quieres incluir StepFertilidad puedes reemplazar o agregar un paso extra
             }
 
             Spacer(modifier = Modifier.height(120.dp))
@@ -241,9 +258,9 @@ fun StepVariedad(
                         checked = seleccionCultivos.contains(c),
                         onCheckedChange = { onToggleCultivo(c) },
                         colors = CheckboxDefaults.colors(
-                            checkedColor = verdeBoton,      // color del fondo del checkbox cuando está marcado
-                            uncheckedColor = Color.Gray,    // color del borde cuando no está marcado
-                            checkmarkColor = Color.White     // color del ✔️ dentro
+                            checkedColor = verdeBoton,
+                            uncheckedColor = Color.Gray,
+                            checkmarkColor = Color.White
                         )
                     )
                     Spacer(Modifier.width(8.dp))
