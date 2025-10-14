@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
 
-    private const val BASE_URL = "http://91.98.193.75:3000/"
+    private const val BASE_URL = "https://ekgcss8ww8o4ok480g08soo4.91.98.193.75.sslip.io/"
     //private const val BASE_URL = " https://api.ecoranger.org/"
     private const val TENANT = "agromo"
     private const val API_KEY = "agromo-key-123"
