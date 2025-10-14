@@ -21,6 +21,8 @@ import com.example.agromo.profile_ui.ProfileScreen
 import com.example.agromo.login_ui.WelcomeScreen
 import com.example.agromo.formulario.RegistroFormularioScreen
 import android.Manifest
+import com.example.agromo.login_ui.OnboardingScreen
+
 
 
 
@@ -69,9 +71,21 @@ fun AppContent() {
         }
         composable("register") {
             RegisterScreen(
-                onBackToLogin = { navController.popBackStack() }
+                onBackToLogin = { navController.popBackStack() },
+                navController = navController
             )
         }
+        composable("onboarding") {
+            OnboardingScreen(
+                onFinish = {
+                    navController.navigate("dashboard") {
+                        popUpTo("welcome") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
         composable("forgot_password") {
             ForgotPasswordScreen(
                 onBackToLogin = { navController.popBackStack() }

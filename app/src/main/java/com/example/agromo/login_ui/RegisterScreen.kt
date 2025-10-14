@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.agromo.login_ui.components.PrimaryButton
 import com.example.agromo.login_ui.components.PasswordField
 import com.example.agromo.login_ui.components.TextFieldOutlined
@@ -15,6 +16,7 @@ import com.example.agromo.login_ui.components.TextFieldOutlined
 @Composable
 fun RegisterScreen(
     onBackToLogin: () -> Unit,
+    navController: NavController,
     viewModel: RegisterViewModel = viewModel()
 ) {
     var fullName by remember { mutableStateOf("") }
@@ -24,6 +26,16 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
 
     val customGreen = Color(0xFF317C42)
+
+
+    LaunchedEffect(viewModel.isRegisterSuccessful) {
+        if (viewModel.isRegisterSuccessful) {
+            // Navegar al Onboarding / WelcomeScreen
+            navController.navigate("onboarding") {
+                popUpTo("register") { inclusive = true }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -40,7 +52,6 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 👇 Campo nuevo para el username
         TextFieldOutlined(
             value = username,
             onValueChange = { username = it },
@@ -80,7 +91,6 @@ fun RegisterScreen(
         PrimaryButton(
             text = "Registrarse",
             onClick = {
-                // Llama al ViewModel
                 viewModel.username = username
                 viewModel.email = email
                 viewModel.password = password
@@ -107,9 +117,7 @@ fun RegisterScreen(
             TextButton(
                 onClick = onBackToLogin,
                 contentPadding = PaddingValues(0.dp),
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = customGreen
-                )
+                colors = ButtonDefaults.textButtonColors(contentColor = customGreen)
             ) {
                 Text("Inicia Sesión")
             }
