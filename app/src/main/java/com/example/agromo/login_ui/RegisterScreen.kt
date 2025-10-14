@@ -7,15 +7,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agromo.login_ui.components.PrimaryButton
 import com.example.agromo.login_ui.components.PasswordField
 import com.example.agromo.login_ui.components.TextFieldOutlined
 
 @Composable
 fun RegisterScreen(
-    onBackToLogin: () -> Unit
+    onBackToLogin: () -> Unit,
+    viewModel: RegisterViewModel = viewModel()
 ) {
     var fullName by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -33,6 +36,16 @@ fun RegisterScreen(
             onValueChange = { fullName = it },
             label = "Nombre completo",
             placeholder = "Ingresa tu nombre"
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 👇 Campo nuevo para el username
+        TextFieldOutlined(
+            value = username,
+            onValueChange = { username = it },
+            label = "Username",
+            placeholder = "Ingresa tu nombre de usuario"
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -67,8 +80,19 @@ fun RegisterScreen(
         PrimaryButton(
             text = "Registrarse",
             onClick = {
-                // TODO: Lógica de registro
+                // Llama al ViewModel
+                viewModel.username = username
+                viewModel.email = email
+                viewModel.password = password
+                viewModel.confirmPassword = confirmPassword
+                viewModel.register()
             }
+        )
+
+        Text(
+            text = viewModel.registerMessage,
+            color = viewModel.registerMessageColor,
+            modifier = Modifier.padding(top = 12.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
