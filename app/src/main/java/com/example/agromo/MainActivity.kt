@@ -1,14 +1,17 @@
 package com.example.agromo
 
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.agromo.aichat_ui.AiChatScreen
+import com.example.agromo.picture_ui.PictureScreen
 import com.example.agromo.login_ui.ForgotPasswordScreen
 import com.example.agromo.login_ui.LoginScreen
 import com.example.agromo.login_ui.RegisterScreen
@@ -17,11 +20,25 @@ import com.example.agromo.dashboard_ui.DashboardScreen
 import com.example.agromo.profile_ui.ProfileScreen
 import com.example.agromo.login_ui.WelcomeScreen
 import com.example.agromo.formulario.RegistroFormularioScreen
+import android.Manifest
+
+
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Aquí es donde verificas y solicitas permisos
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                1
+            )
+        }
+
         setContent {
             AgromoTheme {
                 AppContent()
@@ -29,6 +46,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 
 @Composable
 fun AppContent() {
@@ -90,7 +108,7 @@ fun AppContent() {
             )
         }
         composable("aichat") {
-            AiChatScreen(
+            PictureScreen(
                 onNavigateBackToDashboard = { navController.navigate("dashboard") }
             )
         }

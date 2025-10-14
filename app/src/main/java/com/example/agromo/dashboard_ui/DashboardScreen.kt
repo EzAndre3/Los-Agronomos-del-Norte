@@ -7,9 +7,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agromo.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +31,13 @@ fun DashboardScreen(
     onNavigateToAiChat: () -> Unit,
     onNavigateToFormulario: () -> Unit
 ) {
+    val viewModel: DashboardViewModel = viewModel()
+    val weatherState by viewModel.weatherState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadWeather()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -42,7 +54,15 @@ fun DashboardScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            WeatherCard()
+            WeatherCard(
+                location = weatherState.locationName,
+                temperature = weatherState.temperature,
+                description = weatherState.description,
+                humidity = weatherState.humidity,
+                wind = weatherState.windSpeed,
+                rain = weatherState.precipitation,
+                sprayStatus = weatherState.sprayStatus
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -126,7 +146,15 @@ fun TopBarSection(onAvatarClick: () -> Unit) {
 
 
 @Composable
-fun WeatherCard() {
+fun WeatherCard(
+    location: String,
+    temperature: String,
+    description: String,
+    humidity: String,
+    wind: String,
+    rain: String,
+    sprayStatus: SprayStatus
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -149,18 +177,18 @@ fun WeatherCard() {
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Cuenca, Colombia",
+                        text = location,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = ColorBlackWhiteBlack
                     )
                     Text(
-                        text = "Lunes, 12PM, Parcialmente soleado",
+                        text = description,
                         fontSize = 10.sp,
                         color = Neutral500
                     )
                     Text(
-                        text = "23ºC",
+                        text = temperature,
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -188,14 +216,20 @@ fun WeatherCard() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                WeatherItem("Humedad", "48%", Icons.Filled.Water)
-                WeatherItem("Viento", "10 Km/h", Icons.Filled.Air)
-                WeatherItem("Lluvias", "22%", Icons.Filled.Cloud)
-                WeatherItem("Pulverización", "Desfavorable", Icons.Filled.Warning, Alert600P)
+                WeatherItem("Humedad", humidity, Icons.Filled.Water)
+                WeatherItem("Viento", wind, Icons.Filled.Air)
+                WeatherItem("Lluvias", rain, Icons.Filled.Cloud)
+                val (sprayText, sprayColor) = when(sprayStatus) {
+                    SprayStatus.FAVORABLE -> "Favorable" to Primary800P
+                    SprayStatus.UNFAVORABLE -> "Desfavorable" to Alert600P
+                    SprayStatus.UNKNOWN -> "--" to Color.Black
+                }
+                WeatherItem("Pulverización", sprayText, Icons.Filled.Warning, sprayColor)
             }
         }
     }
 }
+
 
 @Composable
 fun WeatherItem(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, valueColor: Color = Color.Black) {
@@ -277,7 +311,7 @@ fun MonitoringCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Arrow",
                         tint = ColorBlackWhiteWhite,
                         modifier = Modifier.size(16.dp)
