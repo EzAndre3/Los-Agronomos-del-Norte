@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.agromo.aichat_ui.AiChatScreen
+import com.example.agromo.picture_ui.PictureScreen
 import com.example.agromo.login_ui.ForgotPasswordScreen
 import com.example.agromo.login_ui.LoginScreen
 import com.example.agromo.login_ui.RegisterScreen
@@ -90,7 +90,7 @@ fun AppContent() {
             )
         }
         composable("aichat") {
-            AiChatScreen(
+            PictureScreen(
                 onNavigateBackToDashboard = { navController.navigate("dashboard") }
             )
         }

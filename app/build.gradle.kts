@@ -67,4 +67,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // Coil para Jetpack Compose (carga de imágenes)
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
 }
