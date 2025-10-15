@@ -1,5 +1,6 @@
 package com.example.agromo.formulario
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.agromo.formulario.data.FormularioEntity
+import com.example.agromo.data.FormularioEntity
+import com.example.agromo.ui.form.RegistroFormularioViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,21 +35,20 @@ fun RegistroFormularioScreen(
 ) {
     val context = LocalContext.current
     val repository = FormularioRepository(context)
-    val viewModel: FormularioListViewModel = viewModel(
-        factory = FormularioListViewModel.Factory(repository)
-    )
-
+    val viewModel: RegistroFormularioViewModel = viewModel()
 
     val totalSteps = 7
     var step by remember { mutableStateOf(0) }
 
-    // Estados de formulario
+    // Estados locales de UI
     var ubicacion by remember { mutableStateOf(TextFieldValue("")) }
     var usarUbicacionActual by remember { mutableStateOf(false) }
     var cultivoQuery by remember { mutableStateOf(TextFieldValue("")) }
     val cultivos = listOf("Maíz", "Algodón", "Arroz", "Café", "Cacao", "Frijol")
     var seleccionCultivos by remember { mutableStateOf(setOf<String>()) }
     var humedad by remember { mutableStateOf(TextFieldValue("")) }
+
+    val coroutineScope = rememberCoroutineScope() // Para lanzar saveFormulario
 
     Scaffold(
         containerColor = Color.White,
@@ -79,13 +81,12 @@ fun RegistroFormularioScreen(
                     if (step < totalSteps - 1) {
                         step += 1
                     } else {
-                        val nuevoFormulario = FormularioEntity(
-                            id = "FORM-${System.currentTimeMillis()}",
-                            ubicacion = ubicacion.text,
-                            cultivo = seleccionCultivos.joinToString(", "),
-                            humedad = humedad.text
-                        )
-                        viewModel.addFormulario(nuevoFormulario)
+                        // Guardar el formulario completo en DataStore
+                        val finalForm = viewModel.guardarFormulario()
+                        coroutineScope.launch {
+                            repository.saveFormulario(finalForm)
+                        }
+                        Log.d("FORMULARIO", "Formulario guardado: $finalForm")
                         onNext()
                     }
                 },
@@ -117,7 +118,10 @@ fun RegistroFormularioScreen(
             when (step) {
                 0 -> StepUbicacion(
                     ubicacion = ubicacion,
-                    onUbicacionChange = { ubicacion = it },
+                    onUbicacionChange = {
+                        ubicacion = it
+                        viewModel.updateUbicacion(it.text)
+                    },
                     usarActual = usarUbicacionActual,
                     onToggleUsarActual = { usarUbicacionActual = it }
                 )
@@ -126,19 +130,27 @@ fun RegistroFormularioScreen(
                     onCultivoQueryChange = { cultivoQuery = it },
                     cultivos = cultivos,
                     seleccionCultivos = seleccionCultivos,
-                    onToggleCultivo = {
-                        seleccionCultivos = if (seleccionCultivos.contains(it)) {
-                            seleccionCultivos - it
+                    onToggleCultivo = { cultivo ->
+                        seleccionCultivos = if (seleccionCultivos.contains(cultivo)) {
+                            seleccionCultivos - cultivo
                         } else {
-                            seleccionCultivos + it
+                            seleccionCultivos + cultivo
                         }
+                        // Actualizar ViewModel con el primer cultivo seleccionado
+                        viewModel.updateCultivo(seleccionCultivos.firstOrNull() ?: "", null)
                     }
                 )
-                2 -> StepHumedad(humedad = humedad, onHumedadChange = { humedad = it })
+                2 -> StepHumedad(
+                    humedad = humedad,
+                    onHumedadChange = {
+                        humedad = it
+                        viewModel.updateHumedad(it.text)
+                    }
+                )
                 3 -> SteppH()
                 4 -> StepAltura()
                 5 -> StepFenologico()
-                6 -> StepFollaje() // Si quieres incluir StepFertilidad puedes reemplazar o agregar un paso extra
+                6 -> StepFollaje()
             }
 
             Spacer(modifier = Modifier.height(120.dp))
