@@ -21,6 +21,15 @@ import com.example.agromo.profile_ui.ProfileScreen
 import com.example.agromo.login_ui.WelcomeScreen
 import com.example.agromo.formulario.RegistroFormularioScreen
 import android.Manifest
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.navigation.NavType
+import com.example.agromo.dashboard_ui.quickvalues.EditValueScreen
+import androidx.navigation.navArgument
+
+
 
 
 
@@ -51,6 +60,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppContent() {
     val navController = rememberNavController()
+    var refreshQuickActions by remember { mutableStateOf(0) }
 
     NavHost(navController = navController, startDestination = "welcome") {
         composable("welcome") {
@@ -81,7 +91,8 @@ fun AppContent() {
             DashboardScreen(
                 onNavigateToAiChat = { navController.navigate("aichat") },
                 onNavigateToFormulario = { navController.navigate("formulario") },
-                onNavigateToProfile = { navController.navigate("profile") }
+                onNavigateToProfile = { navController.navigate("profile") },
+                onNavigateToQuickActionEdit = { key -> navController.navigate("editValue/$key") }
             )
         }
         composable("formulario") {
@@ -112,5 +123,17 @@ fun AppContent() {
                 onNavigateBackToDashboard = { navController.navigate("dashboard") }
             )
         }
+        composable(
+            route = "editValue/{key}",
+            arguments = listOf(navArgument("key") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val key = backStackEntry.arguments?.getString("key") ?: ""
+            EditValueScreen(
+                key = key,
+                onBack = {
+                    navController.popBackStack() }
+            )
+        }
+
     }
 }

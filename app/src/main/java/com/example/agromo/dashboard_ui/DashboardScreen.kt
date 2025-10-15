@@ -1,6 +1,8 @@
 package com.example.agromo.dashboard_ui
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -14,10 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,7 +35,8 @@ import com.example.agromo.ui.theme.*
 fun DashboardScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToAiChat: () -> Unit,
-    onNavigateToFormulario: () -> Unit
+    onNavigateToFormulario: () -> Unit,
+    onNavigateToQuickActionEdit: (String) -> Unit
 ) {
     val viewModel: DashboardViewModel = viewModel()
     val weatherState by viewModel.weatherState.collectAsState()
@@ -74,7 +81,7 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            QuickActionsSection()
+            QuickActionsSection(onCardClick = onNavigateToQuickActionEdit)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -403,7 +410,9 @@ fun CropItem(emoji: String) {
 }
 
 @Composable
-fun QuickActionsSection() {
+fun QuickActionsSection(
+    onCardClick: (String) -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -427,35 +436,50 @@ fun QuickActionsSection() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Añada nuevo\ncultivo", Icons.Filled.Add, true)
-            QuickActionCard("Estado\nfenológico", Icons.Filled.Science)
-            QuickActionCard("Plagas y\nenfermedades", Icons.Filled.BugReport)
+            QuickActionCard("Estado\nfenológico", Icons.Filled.Science, onClick = { onCardClick("Estado fenológico") })
+            QuickActionCard("Plagas y\nenfermedades", Icons.Filled.BugReport, onClick = { onCardClick("Plagas y Enfermedades") })
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Malezas y\ncompetencia", Icons.Filled.Grass)
-            QuickActionCard("Humedad\ndel suelo", Icons.Filled.Water)
-            QuickActionCard("PH del\nsuelo", Icons.Filled.Biotech)
+            QuickActionCard("Malezas y\ncompetencia", Icons.Filled.Grass, onClick = { onCardClick("Malezas y Competencia") })
+            QuickActionCard("Humedad\ndel suelo", Icons.Filled.Water, onClick = { onCardClick("Humedad del suelo") })
+            QuickActionCard("PH del\nsuelo", Icons.Filled.Biotech, onClick = { onCardClick("PH del suelo") })
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Altura de\nplantas", Icons.Filled.Height)
-            QuickActionCard("Fertilidad\ndel suelo", Icons.Filled.Landscape)
+            QuickActionCard("Altura de\nplantas", Icons.Filled.Height, onClick = { onCardClick("Altura de plantas") })
+            QuickActionCard("Fertilidad\ndel suelo", Icons.Filled.Landscape, onClick = { onCardClick("Fertilidad del suelo") })
             Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-fun RowScope.QuickActionCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, isAdd: Boolean = false) {
+fun RowScope.QuickActionCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isAdd: Boolean = false,
+    onClick: () -> Unit
+    ) {
+    val context = LocalContext.current
+    var value by remember { mutableStateOf("") }
+
+    // Así fuerzas la lectura cada vez que regreses a DashboardScreen
+    LaunchedEffect(title) {
+        val prefs = context.getSharedPreferences("quickactions", Context.MODE_PRIVATE)
+        value = prefs.getString(title, "") ?: ""
+    }
+
+
     Card(
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.weight(1f).
+        clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Primary50),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
