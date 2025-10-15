@@ -2,13 +2,18 @@ package com.example.agromo
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -29,6 +34,7 @@ import com.example.agromo.profile_ui.ProfileScreen
 import com.example.agromo.ui.theme.AgromoTheme
 import com.example.agromo.network.SessionManager
 import kotlinx.coroutines.launch
+import androidx.core.view.WindowCompat
 
 class MainActivity : ComponentActivity() {
 
@@ -47,8 +53,27 @@ class MainActivity : ComponentActivity() {
             )
         }
 
+        // ------ FORZAR status bar icons EN NEGRO ------
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        window.statusBarColor = Color.White.toArgb() // fondo blanco status bar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.setSystemBarsAppearance(
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        }
+        // ----------------------------------------------
+
         setContent {
             AgromoTheme {
+                // aseguramos status bar color BLANCO en cada recomposición
+                SideEffect {
+                    window.statusBarColor = Color.White.toArgb()
+                }
                 Box(
                     Modifier
                         .fillMaxSize()
@@ -70,9 +95,9 @@ class MainActivity : ComponentActivity() {
             val sessionManager = SessionManager(applicationContext)
             val token = sessionManager.getToken()
             startDestination = if (token != null && token.isNotEmpty()) {
-                "dashboard" // Si hay token → ir directo al Dashboard
+                "dashboard"
             } else {
-                "welcome" // Si no hay sesión → mostrar pantalla de bienvenida
+                "welcome"
             }
         }
 
@@ -139,7 +164,6 @@ class MainActivity : ComponentActivity() {
                         },
                         onSave = { /* guardar cambios */ },
                         onLogout = {
-                            // 🔹 Al cerrar sesión, borrar token
                             val sessionManager = SessionManager(applicationContext)
                             lifecycleScope.launch {
                                 sessionManager.clearSession()
