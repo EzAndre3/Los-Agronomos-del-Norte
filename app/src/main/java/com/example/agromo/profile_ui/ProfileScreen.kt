@@ -84,17 +84,10 @@ fun AgromoHeader() {
         horizontalArrangement = Arrangement.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_plant),
+            painter = painterResource(id = R.drawable.logo_agromo),
             contentDescription = "Logo",
             tint = Color(0xFF2E7D32),
-            modifier = Modifier.size(40.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Agromo",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF2E7D32)
+            modifier = Modifier.size(80.dp)
         )
     }
 }

@@ -1,5 +1,4 @@
 package com.example.agromo.dashboard_ui
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,14 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,7 +72,6 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            MyCropsSection()
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -345,70 +339,6 @@ fun MonitoringCard(
     }
 }
 
-
-@Composable
-fun MyCropsSection() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Mis cultivos",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = ColorBlackWhiteBlack
-            )
-            Text(
-                text = "Acceda y gestione tus cultivos",
-                fontSize = 14.sp,
-                color = Neutral700
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Primary800P.copy(alpha = 0.15f))
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            val crops = listOf("🫒", "🍆", "☕", "🌶️", "🎃", "🌽", "🍅", "🥕")
-            crops.take(8).forEach { emoji ->
-                CropItem(emoji)
-            }
-        }
-    }
-}
-
-@Composable
-fun CropItem(emoji: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.width(64.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .border(4.dp, Secondary700P, CircleShape)
-                .background(ColorBlackWhiteWhite, CircleShape)
-                .padding(6.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = emoji,
-                fontSize = 24.sp
-            )
-        }
-    }
-}
-
 @Composable
 fun QuickActionsSection(
     onCardClick: (String) -> Unit
@@ -467,14 +397,6 @@ fun RowScope.QuickActionCard(
     isAdd: Boolean = false,
     onClick: () -> Unit
     ) {
-    val context = LocalContext.current
-    var value by remember { mutableStateOf("") }
-
-    // Así fuerzas la lectura cada vez que regreses a DashboardScreen
-    LaunchedEffect(title) {
-        val prefs = context.getSharedPreferences("quickactions", Context.MODE_PRIVATE)
-        value = prefs.getString(title, "") ?: ""
-    }
 
 
     Card(

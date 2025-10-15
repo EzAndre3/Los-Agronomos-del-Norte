@@ -21,17 +21,20 @@ import com.example.agromo.profile_ui.ProfileScreen
 import com.example.agromo.login_ui.WelcomeScreen
 import com.example.agromo.formulario.RegistroFormularioScreen
 import android.Manifest
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import com.example.agromo.dashboard_ui.quickvalues.EditValueScreen
 import androidx.navigation.navArgument
-
-
-
-
 
 class MainActivity : ComponentActivity() {
 
@@ -39,7 +42,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Aquí es donde verificas y solicitas permisos
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(
                 this,
@@ -50,9 +52,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AgromoTheme {
-                AppContent()
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(WindowInsets.safeDrawing.asPaddingValues())
+                ) {
+                    AppContent()
+                }
             }
         }
+
     }
 }
 
