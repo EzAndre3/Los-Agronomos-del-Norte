@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
 import android.util.Log
 
 
-private val Context.dataStore by preferencesDataStore(name = "formulario_prefs")
+val Context.dataStore by preferencesDataStore(name = "formulario_prefs")
 
 class FormularioRepository(private val context: Context) {
 

@@ -27,16 +27,10 @@ import com.example.agromo.formulario.data.FormularioEntity
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistroFormularioScreen(
+    formularioViewModel: FormularioListViewModel,
     onNext: () -> Unit,
     onBack: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val repository = FormularioRepository(context)
-    val viewModel: FormularioListViewModel = viewModel(
-        factory = FormularioListViewModel.Factory(repository)
-    )
-
-
     val totalSteps = 7
     var step by remember { mutableStateOf(0) }
 
@@ -85,7 +79,7 @@ fun RegistroFormularioScreen(
                             cultivo = seleccionCultivos.joinToString(", "),
                             humedad = humedad.text
                         )
-                        viewModel.addFormulario(nuevoFormulario)
+                        formularioViewModel.addFormulario(nuevoFormulario)
                         onNext()
                     }
                 },
@@ -193,7 +187,7 @@ fun StepUbicacion(
         }
 
         Spacer(Modifier.height(8.dp))
-        Text("O complete manualmente", color = Color.Gray)
+        Text("O complete manually", color = Color.Gray)
         Spacer(Modifier.height(8.dp))
 
         OutlinedTextField(

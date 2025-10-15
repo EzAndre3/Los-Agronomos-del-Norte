@@ -23,15 +23,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.agromo.formulario.data.FormularioEntity
 import com.example.agromo.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
+    formularios: List<FormularioEntity>,
     onNavigateToProfile: () -> Unit,
     onNavigateToAiChat: () -> Unit,
     onNavigateToFormulario: () -> Unit,
-    onNavigateToQuickActionEdit: (String) -> Unit
+    onNavigateToQuickActionEdit: (String) -> Unit,
+    onNavigateToFormularioDetalle: (String) -> Unit
 ) {
     val viewModel: DashboardViewModel = viewModel()
     val weatherState by viewModel.weatherState.collectAsState()
@@ -83,7 +86,13 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            RecentReportsSection()
+            RecentReportsSection(
+                formularios = formularios,
+                onReportClicked = {
+                    onNavigateToFormularioDetalle(it.id)
+                }
+            )
+
 
             Spacer(modifier = Modifier.height(100.dp))
         }
@@ -544,60 +553,27 @@ fun PhotoStepCard(number: String, title: String, icon: androidx.compose.ui.graph
 }
 
 @Composable
-fun RecentReportsSection() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Resumen de informes\nrecientes",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = ColorBlackWhiteBlack
+fun RecentReportsSection(
+    formularios: List<FormularioEntity>,
+    onReportClicked: (FormularioEntity) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        formularios.forEach { formulario ->
+            ReportCard(
+                date = "Hoy", // o formulario.fecha si existe
+                cropType = formulario.cultivo,
+                cropIcon = "🌱",
+                title = "Informe de ${formulario.cultivo}",
+                status = "Completo",
+                statusColor = Color.Green,
+                modifier = Modifier
+                    .clickable { onReportClicked(formulario) }
+                    .padding(vertical = 4.dp)
             )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "Ver todos",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Primary800P
-                )
-                Icon(
-                    imageVector = Icons.Filled.ChevronRight,
-                    contentDescription = "Ver todos",
-                    tint = Primary800P,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
-
-        ReportCard(
-            date = "12 sept",
-            cropType = "Pimiento",
-            cropIcon = "🌶️",
-            title = "Informe integral",
-            status = "Completo",
-            statusColor = Primary600Intermediary
-        )
-
-        ReportCard(
-            date = "23 sept",
-            cropType = "Café",
-            cropIcon = "☕",
-            title = "pH del suelo",
-            status = "Atender",
-            statusColor = Color(0xFFAE9721)
-        )
     }
 }
+
 
 @Composable
 fun ReportCard(
@@ -606,96 +582,21 @@ fun ReportCard(
     cropIcon: String,
     title: String,
     status: String,
-    statusColor: Color
+    statusColor: Color,
+    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Neutral50),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Primary800P)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(13.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(68.dp)
-                        .background(Primary300, RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = cropIcon,
-                        fontSize = 32.sp
-                    )
-                }
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(42.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = date,
-                            fontSize = 12.sp,
-                            color = ColorBlackWhiteBlack
-                        )
-
-                        Row(
-                            modifier = Modifier
-                                .border(1.dp, Primary600Intermediary, RoundedCornerShape(16.dp))
-                                .background(Neutral50, RoundedCornerShape(16.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = cropIcon, fontSize = 8.sp)
-                            Text(
-                                text = cropType,
-                                fontSize = 12.sp,
-                                color = Primary800P
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = title,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ColorBlackWhiteBlack
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .background(statusColor.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
-                            .border(1.dp, statusColor, RoundedCornerShape(16.dp))
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = status,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = statusColor
-                        )
-                    }
-                }
+    Card(modifier = modifier, shape = RoundedCornerShape(16.dp)) {
+        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(cropIcon, fontSize = 32.sp)
+            Column {
+                Text(title, fontWeight = FontWeight.Bold)
+                Text("Cultivo: $cropType")
+                Text("Fecha: $date")
             }
-
-            Icon(
-                imageVector = Icons.Filled.ChevronRight,
-                contentDescription = "Ir al informe",
-                tint = ColorBlackWhiteBlack,
-                modifier = Modifier.size(24.dp)
-            )
+            Box(Modifier.background(statusColor)) {
+                Text(status, color = Color.White, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
+
