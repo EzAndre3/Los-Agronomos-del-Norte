@@ -1,6 +1,7 @@
 package com.example.agromo.dashboard_ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -29,7 +30,8 @@ import com.example.agromo.ui.theme.*
 fun DashboardScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToAiChat: () -> Unit,
-    onNavigateToFormulario: () -> Unit
+    onNavigateToFormulario: () -> Unit,
+    onNavigateToQuickActionEdit: (String) -> Unit
 ) {
     val viewModel: DashboardViewModel = viewModel()
     val weatherState by viewModel.weatherState.collectAsState()
@@ -70,11 +72,10 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            MyCropsSection()
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            QuickActionsSection()
+            QuickActionsSection(onCardClick = onNavigateToQuickActionEdit)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -338,72 +339,10 @@ fun MonitoringCard(
     }
 }
 
-
 @Composable
-fun MyCropsSection() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Mis cultivos",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = ColorBlackWhiteBlack
-            )
-            Text(
-                text = "Acceda y gestione tus cultivos",
-                fontSize = 14.sp,
-                color = Neutral700
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Primary800P.copy(alpha = 0.15f))
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            val crops = listOf("🫒", "🍆", "☕", "🌶️", "🎃", "🌽", "🍅", "🥕")
-            crops.take(8).forEach { emoji ->
-                CropItem(emoji)
-            }
-        }
-    }
-}
-
-@Composable
-fun CropItem(emoji: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.width(64.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .border(4.dp, Secondary700P, CircleShape)
-                .background(ColorBlackWhiteWhite, CircleShape)
-                .padding(6.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = emoji,
-                fontSize = 24.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun QuickActionsSection() {
+fun QuickActionsSection(
+    onCardClick: (String) -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -427,35 +366,42 @@ fun QuickActionsSection() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Añada nuevo\ncultivo", Icons.Filled.Add, true)
-            QuickActionCard("Estado\nfenológico", Icons.Filled.Science)
-            QuickActionCard("Plagas y\nenfermedades", Icons.Filled.BugReport)
+            QuickActionCard("Estado\nfenológico", Icons.Filled.Science, onClick = { onCardClick("Estado fenológico") })
+            QuickActionCard("Plagas y\nenfermedades", Icons.Filled.BugReport, onClick = { onCardClick("Plagas y Enfermedades") })
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Malezas y\ncompetencia", Icons.Filled.Grass)
-            QuickActionCard("Humedad\ndel suelo", Icons.Filled.Water)
-            QuickActionCard("PH del\nsuelo", Icons.Filled.Biotech)
+            QuickActionCard("Malezas y\ncompetencia", Icons.Filled.Grass, onClick = { onCardClick("Malezas y Competencia") })
+            QuickActionCard("Humedad\ndel suelo", Icons.Filled.Water, onClick = { onCardClick("Humedad del suelo") })
+            QuickActionCard("PH del\nsuelo", Icons.Filled.Biotech, onClick = { onCardClick("PH del suelo") })
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Altura de\nplantas", Icons.Filled.Height)
-            QuickActionCard("Fertilidad\ndel suelo", Icons.Filled.Landscape)
+            QuickActionCard("Altura de\nplantas", Icons.Filled.Height, onClick = { onCardClick("Altura de plantas") })
+            QuickActionCard("Fertilidad\ndel suelo", Icons.Filled.Landscape, onClick = { onCardClick("Fertilidad del suelo") })
             Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-fun RowScope.QuickActionCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, isAdd: Boolean = false) {
+fun RowScope.QuickActionCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isAdd: Boolean = false,
+    onClick: () -> Unit
+    ) {
+
+
     Card(
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.weight(1f).
+        clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Primary50),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)

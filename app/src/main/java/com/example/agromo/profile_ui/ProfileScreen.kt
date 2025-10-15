@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,16 +18,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.agromo.R
+import com.example.agromo.network.SessionManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 
 /* ---------- Modelo ---------- */
 
@@ -84,30 +85,15 @@ fun AgromoHeader() {
         horizontalArrangement = Arrangement.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_plant),
+            painter = painterResource(id = R.drawable.logo_agromo),
             contentDescription = "Logo",
             tint = Color(0xFF2E7D32),
-            modifier = Modifier.size(40.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Agromo",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF2E7D32)
+            modifier = Modifier.size(80.dp)
         )
     }
 }
 
-/* ---------- UI ---------- */
-
-private enum class ProfileTab(val label: String) {
-    PERSONAL("Información personal"),
-    SETTINGS("Configuración"),
-    NOTIFICATIONS("Notificaciones")
-}
-
-private enum class ThemeOption { SYSTEM, LIGHT, DARK }
+/* ---------- UI simplificada: Solo información personal ---------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,22 +104,22 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
+    val snackbarHostState = remember { SnackbarHostState() }
     val uiState = remember { mutableStateOf(ProfileUiState()) }
-    var tab by remember { mutableStateOf(ProfileTab.PERSONAL) }
 
     LaunchedEffect(Unit) {
         uiState.value = readProfile(context).first()
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { AgromoHeader() },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Atrás"
                         )
                     }
@@ -146,6 +132,8 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .background(Color(0xFFF5F5F5))
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
             Card(
                 modifier = Modifier
@@ -174,90 +162,54 @@ fun ProfileScreen(
                             fontWeight = FontWeight.Bold
                         )
                     }
-
                     Spacer(Modifier.height(12.dp))
-
                     Text(uiState.value.fullName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     Text(uiState.value.role, color = Color.Gray)
                     Text(uiState.value.company, color = Color.Gray)
-
                     Spacer(Modifier.height(16.dp))
 
-                    // Tabs
-                    ScrollableTabRow(
-                        selectedTabIndex = tab.ordinal,
-                        containerColor = Color.Transparent,
-                        contentColor = Color(0xFF2E7D32),
-                        edgePadding = 0.dp,
-                        divider = {}
+                    PersonalForm(
+                        state = uiState.value,
+                        onChange = { uiState.value = it }
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        ProfileTab.values().forEach { t ->
-                            Tab(
-                                selected = t == tab,
-                                onClick = { tab = t },
-                                selectedContentColor = Color(0xFF2E7D32),
-                                unselectedContentColor = Color.Gray,
-                                text = { Text(t.label, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 13.sp) }
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(8.dp))
-
-                    when (tab) {
-                        ProfileTab.PERSONAL -> {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .verticalScroll(rememberScrollState()),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                PersonalForm(
-                                    state = uiState.value,
-                                    onChange = { uiState.value = it }
-                                )
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Button(
-                                        onClick = {
-                                            val current = uiState.value
-                                            scope.launch {
-                                                saveProfile(context, current)
-                                            }
-                                            onSave(current)
-                                            onBack()
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
-                                    ) { Text("Guardar Cambios", color = Color.White) }
-
-                                    OutlinedButton(
-                                        onClick = onBack,
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) { Text("Cancelar") }
+                        Button(
+                            onClick = {
+                                val current = uiState.value
+                                scope.launch {
+                                    saveProfile(context, current)
                                 }
+                                onSave(current)
+                                onBack()
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+                        ) { Text("Guardar Cambios", color = Color.White) }
 
-                                OutlinedButton(
-                                    onClick = onLogout,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp),
-                                ) { Text("Cerrar sesión") }
-                            }
-                        }
-
-                        ProfileTab.SETTINGS -> {
-                            SettingsSection()
-                        }
-
-                        ProfileTab.NOTIFICATIONS -> {
-                            NotificationsSection()
-                        }
+                        OutlinedButton(
+                            onClick = onBack,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) { Text("Cancelar") }
                     }
+                    OutlinedButton(
+                        onClick = {
+                            val sessionManager = SessionManager(context)
+                            scope.launch(Dispatchers.IO) {
+                                sessionManager.clearSession()
+                                snackbarHostState.showSnackbar("Sesión cerrada correctamente")
+                            }
+                            onLogout()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                    ) { Text("Cerrar sesión") }
                 }
             }
         }
@@ -289,57 +241,6 @@ private fun LabeledField(label: String, value: String, onValue: (String) -> Unit
             shape = RoundedCornerShape(12.dp),
             singleLine = true
         )
-    }
-}
-
-// Tema con Sistema / Claro / Oscuro + GPS switch
-@Composable
-private fun SettingsSection() {
-    var theme by remember { mutableStateOf(ThemeOption.SYSTEM) }
-    var gpsEnabled by remember { mutableStateOf(false) }
-
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-        Text("Preferencias", fontWeight = FontWeight.SemiBold)
-
-        AssistChip(
-            onClick = {
-                theme = when (theme) {
-                    ThemeOption.SYSTEM -> ThemeOption.LIGHT
-                    ThemeOption.LIGHT -> ThemeOption.DARK
-                    ThemeOption.DARK -> ThemeOption.SYSTEM
-                }
-            },
-            label = {
-                Text(
-                    when (theme) {
-                        ThemeOption.SYSTEM -> "Tema: Sistema"
-                        ThemeOption.LIGHT -> "Tema: Claro"
-                        ThemeOption.DARK -> "Tema: Oscuro"
-                    }
-                )
-            }
-        )
-
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("GPS")
-            Spacer(Modifier.weight(1f))
-            Switch(checked = gpsEnabled, onCheckedChange = { gpsEnabled = it })
-        }
-    }
-}
-
-// Notificaciones con un switch
-@Composable
-private fun NotificationsSection() {
-    var enabled by remember { mutableStateOf(true) }
-
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-        Text("Notificaciones", fontWeight = FontWeight.SemiBold)
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Activado")
-            Spacer(Modifier.weight(1f))
-            Switch(checked = enabled, onCheckedChange = { enabled = it })
-        }
     }
 }
 
