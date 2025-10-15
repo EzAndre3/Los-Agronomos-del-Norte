@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -57,7 +58,7 @@ fun RegistroFormularioScreen(
                     IconButton(onClick = {
                         if (step == 0) onBack() else step = (step - 1).coerceAtLeast(0)
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
@@ -438,7 +439,7 @@ fun StepFertilidad() {
                 readOnly = true,
                 label = { Text("Nivel de fertilidad") },
                 modifier = Modifier
-                    .menuAnchor()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -541,7 +542,7 @@ fun StepAltura() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione un método") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
             ExposedDropdownMenu(
@@ -582,7 +583,7 @@ fun StepFenologico() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Estado fenológico") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
             ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -640,7 +641,7 @@ fun StepFollaje() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
             ExposedDropdownMenu(
@@ -673,7 +674,7 @@ fun StepFollaje() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
             ExposedDropdownMenu(
@@ -706,7 +707,7 @@ fun StepFollaje() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
             ExposedDropdownMenu(
