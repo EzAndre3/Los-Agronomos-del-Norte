@@ -1,15 +1,17 @@
 package com.example.agromo.login_ui
 
+import android.app.Application
 import androidx.compose.runtime.*
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.agromo.model.LoginRequest
 import com.example.agromo.network.ApiClient
+import com.example.agromo.network.SessionManager
 import kotlinx.coroutines.launch
 import android.util.Log
 import androidx.compose.ui.graphics.Color
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     var email by mutableStateOf("")
     var password by mutableStateOf("")
@@ -19,11 +21,21 @@ class LoginViewModel : ViewModel() {
     var loginMessageColor by mutableStateOf(Color.Red)
     var isLoginSuccessful by mutableStateOf(false)
 
+    private val sessionManager = SessionManager(application.applicationContext)
+
+    init {
+        // 🔹 Si existe sesión previa, recuperarla
+        viewModelScope.launch {
+            email = sessionManager.getSavedEmail() ?: ""
+            rememberMe = email.isNotEmpty()
+        }
+    }
+
     fun login() {
         loginMessage = ""
         isLoginSuccessful = false
 
-        // 🔹 Validación básica
+        // 🔹 Validación simple
         if (email.isBlank() || password.isBlank()) {
             loginMessage = "Ingresa usuario y contraseña"
             loginMessageColor = Color.Red
@@ -32,25 +44,29 @@ class LoginViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // 🔹 Crear request con los datos correctos
                 val request = LoginRequest(
                     user_email = email.trim(),
                     password = password.trim()
                 )
 
                 Log.d("LOGIN", "Iniciando login con ${request.user_email}")
-
-                // 🔹 Llamada al API
                 val response = ApiClient.apiService.loginUser(request)
 
-                // 🔹 Logs para depurar
                 Log.d("LOGIN", "HTTP code: ${response.code()}")
                 Log.d("LOGIN", "isSuccessful: ${response.isSuccessful}")
                 Log.d("LOGIN", "Body: ${response.body()}")
-                Log.d("LOGIN", "ErrorBody: ${response.errorBody()?.string()}")
 
-                // 🔹 Manejo de respuesta
                 if (response.isSuccessful) {
+                    val token = response.body()?.token ?: ""
+
+                    // Solo guardar sesión completa si "Recuérdame" está activo
+                    if (rememberMe) {
+                        sessionManager.saveToken(token)
+                        sessionManager.saveEmail(email)
+                    } else {
+                        sessionManager.clearSession() // borra todo (token y email)
+                    }
+
                     loginMessage = "Inicio de sesión exitoso"
                     loginMessageColor = Color(0xFF317C42)
                     isLoginSuccessful = true

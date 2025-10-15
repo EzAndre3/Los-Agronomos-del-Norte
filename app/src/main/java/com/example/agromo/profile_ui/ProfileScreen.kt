@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,9 +26,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.agromo.R
+import com.example.agromo.network.SessionManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 /* ---------- Modelo ---------- */
 
@@ -111,6 +115,7 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val uiState = remember { mutableStateOf(ProfileUiState()) }
     var tab by remember { mutableStateOf(ProfileTab.PERSONAL) }
@@ -120,13 +125,14 @@ fun ProfileScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { AgromoHeader() },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Atrás"
                         )
                     }
@@ -235,8 +241,16 @@ fun ProfileScreen(
                                     ) { Text("Cancelar") }
                                 }
 
+                                // 🔹 Botón de Cerrar Sesión
                                 OutlinedButton(
-                                    onClick = onLogout,
+                                    onClick = {
+                                        val sessionManager = SessionManager(context)
+                                        scope.launch(Dispatchers.IO) {
+                                            sessionManager.clearSession()
+                                            snackbarHostState.showSnackbar("Sesión cerrada correctamente")
+                                        }
+                                        onLogout()
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
                                 ) { Text("Cerrar sesión") }
