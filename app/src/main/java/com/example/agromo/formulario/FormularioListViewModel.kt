@@ -1,7 +1,6 @@
 package com.example.agromo.formulario
 
 import androidx.lifecycle.ViewModel
-import com.example.agromo.formulario.FormularioEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
