@@ -1,4 +1,4 @@
-package com.example.agromo.data
+package com.example.agromo.formulario
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

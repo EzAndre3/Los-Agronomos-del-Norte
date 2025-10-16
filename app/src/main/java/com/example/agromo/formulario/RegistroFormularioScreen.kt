@@ -21,10 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.agromo.data.FormularioEntity
-import com.example.agromo.ui.form.RegistroFormularioViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,7 +32,7 @@ fun RegistroFormularioScreen(
 ) {
     val context = LocalContext.current
     val repository = FormularioRepository(context)
-    val viewModel: RegistroFormularioViewModel = viewModel()
+    val viewModel: FormularioListViewModel = viewModel()
 
     val totalSteps = 7
     var step by remember { mutableStateOf(0) }
@@ -143,7 +140,7 @@ fun StepIndicator(current: Int, total: Int) {
 }
 
 @Composable
-fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
+fun StepUbicacion(viewModel: FormularioListViewModel) {
     var ubicacion by remember { mutableStateOf(TextFieldValue("")) }
     var usarActual by remember { mutableStateOf(false) }
 
@@ -199,7 +196,7 @@ fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
 }
 
 @Composable
-fun StepVariedad(viewModel: RegistroFormularioViewModel) {
+fun StepVariedad(viewModel: FormularioListViewModel) {
     var cultivoQuery by remember { mutableStateOf(TextFieldValue("")) }
     var cultivos = listOf("Maíz", "Trigo", "Sorgo", "Cebada", "Avena", "Frijol", "Soya", "Caña de azúcar", "Papa", "Tomate")
     var seleccionCultivos by remember { mutableStateOf(setOf<String>()) }
@@ -331,7 +328,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
 }
 
 @Composable
-fun StepHumedad(viewModel: RegistroFormularioViewModel) {
+fun StepHumedad(viewModel: FormularioListViewModel) {
     var humedad by remember { mutableStateOf(TextFieldValue("")) }
     var errorHumedad by remember { mutableStateOf(false) }
 
@@ -382,7 +379,7 @@ fun StepHumedad(viewModel: RegistroFormularioViewModel) {
 
 
 @Composable
-fun SteppH(viewModel: RegistroFormularioViewModel) {
+fun SteppH(viewModel: FormularioListViewModel) {
     var ph by remember { mutableStateOf(TextFieldValue("")) }
     var selectedMedidor by remember { mutableStateOf<String?>(null) } // Guarda el tipo de medidor
 
@@ -444,7 +441,7 @@ fun SteppH(viewModel: RegistroFormularioViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepFertilidad(viewModel: RegistroFormularioViewModel) {
+fun StepFertilidad(viewModel: FormularioListViewModel) {
     var nivelFertilidadExpanded by remember { mutableStateOf(false) }
     var nivelFertilidad by remember { mutableStateOf("Nivel de fertilidad") }
 
@@ -568,7 +565,7 @@ fun StepFertilidad(viewModel: RegistroFormularioViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepAltura(viewModel: RegistroFormularioViewModel) {
+fun StepAltura(viewModel: FormularioListViewModel) {
     var altura by remember { mutableStateOf(TextFieldValue("")) }
     var metodo by remember { mutableStateOf("Seleccione un método") }
     var expandedMetodo by remember { mutableStateOf(false) }
@@ -649,7 +646,7 @@ fun StepAltura(viewModel: RegistroFormularioViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepFenologico(viewModel: RegistroFormularioViewModel) {
+fun StepFenologico(viewModel: FormularioListViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var estado by remember { mutableStateOf("Seleccione estado") }
     var observaciones by remember { mutableStateOf("") }
@@ -722,7 +719,7 @@ fun StepFenologico(viewModel: RegistroFormularioViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepFollaje(viewModel: RegistroFormularioViewModel) {
+fun StepFollaje(viewModel: FormularioListViewModel) {
     var densidad by remember { mutableStateOf("Seleccione una opción") }
     var color by remember { mutableStateOf("Seleccione una opción") }
     var estado by remember { mutableStateOf("Seleccione una opción") }

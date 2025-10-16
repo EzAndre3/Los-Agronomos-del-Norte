@@ -1,11 +1,11 @@
-package com.example.agromo.ui.form
+package com.example.agromo.formulario
 
 import androidx.lifecycle.ViewModel
-import com.example.agromo.data.FormularioEntity
+import com.example.agromo.formulario.FormularioEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class RegistroFormularioViewModel : ViewModel() {
+class FormularioListViewModel : ViewModel() {
 
     // Estado principal del formulario
     private val _formulario = MutableStateFlow(FormularioEntity())
