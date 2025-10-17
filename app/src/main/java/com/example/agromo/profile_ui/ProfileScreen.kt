@@ -275,7 +275,7 @@ fun ProfileScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
                         ) {
                             Text(
-                                "Guardar cambios",
+                                "Guardar",
                                 color = Color.White,
                                 fontSize = 16.sp,
                                 maxLines = 1,
