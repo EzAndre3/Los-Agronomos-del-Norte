@@ -1,6 +1,12 @@
 package com.example.agromo.profile_ui
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,13 +22,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.agromo.R
 import com.example.agromo.network.SessionManager
 import kotlinx.coroutines.flow.first
@@ -30,54 +41,76 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 
-/* ---------- Modelo ---------- */
+// ---------- Helpers para permisos ----------
+fun hasLocationPermission(context: Context): Boolean =
+    ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
 
+fun isPermissionPermanentlyDenied(activity: Activity): Boolean {
+    return ActivityCompat.shouldShowRequestPermissionRationale(
+        activity,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    ).not()
+}
+
+fun requestLocationPermission(activity: Activity) {
+    ActivityCompat.requestPermissions(
+        activity,
+        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+        1
+    )
+}
+
+fun openAppPermissionSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.parse("package:" + context.packageName)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    context.startActivity(intent)
+}
+
+/* ---------- Modelo ---------- */
 data class ProfileUiState(
     val fullName: String = "María González",
     val email: String = "",
     val phone: String = "",
     val company: String = "AWAQ",
-    val role: String = "CEO",
-    val location: String = ""
+    val role: String = "CEO"
 )
 
 /* ---------- DataStore ---------- */
-
 private val Context.dataStore by preferencesDataStore("profile_prefs")
-
 private object ProfileKeys {
     val FULL_NAME = stringPreferencesKey("full_name")
-    val EMAIL     = stringPreferencesKey("email")
-    val PHONE     = stringPreferencesKey("phone")
-    val COMPANY   = stringPreferencesKey("company")
-    val ROLE      = stringPreferencesKey("role")
-    val LOCATION  = stringPreferencesKey("location")
+    val EMAIL = stringPreferencesKey("email")
+    val PHONE = stringPreferencesKey("phone")
+    val COMPANY = stringPreferencesKey("company")
+    val ROLE = stringPreferencesKey("role")
 }
 
 private suspend fun saveProfile(context: Context, profile: ProfileUiState) {
     context.dataStore.edit { p ->
         p[ProfileKeys.FULL_NAME] = profile.fullName
-        p[ProfileKeys.EMAIL]     = profile.email
-        p[ProfileKeys.PHONE]     = profile.phone
-        p[ProfileKeys.COMPANY]   = profile.company
-        p[ProfileKeys.ROLE]      = profile.role
-        p[ProfileKeys.LOCATION]  = profile.location
+        p[ProfileKeys.EMAIL] = profile.email
+        p[ProfileKeys.PHONE] = profile.phone
+        p[ProfileKeys.COMPANY] = profile.company
+        p[ProfileKeys.ROLE] = profile.role
     }
 }
 
 private fun readProfile(context: Context) = context.dataStore.data.map { p ->
     ProfileUiState(
         fullName = p[ProfileKeys.FULL_NAME] ?: "María González",
-        email    = p[ProfileKeys.EMAIL]     ?: "",
-        phone    = p[ProfileKeys.PHONE]     ?: "",
-        company  = p[ProfileKeys.COMPANY]   ?: "AWAQ",
-        role     = p[ProfileKeys.ROLE]      ?: "CEO",
-        location = p[ProfileKeys.LOCATION]  ?: ""
+        email = p[ProfileKeys.EMAIL] ?: "",
+        phone = p[ProfileKeys.PHONE] ?: "",
+        company = p[ProfileKeys.COMPANY] ?: "AWAQ",
+        role = p[ProfileKeys.ROLE] ?: "CEO"
     )
 }
 
 /* ---------- Header reutilizable ---------- */
-
 @Composable
 fun AgromoHeader() {
     Row(
@@ -93,8 +126,7 @@ fun AgromoHeader() {
     }
 }
 
-/* ---------- UI simplificada: Solo información personal ---------- */
-
+/* ---------- Pantalla principal de perfil ---------- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -103,12 +135,32 @@ fun ProfileScreen(
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
+    val activity = context as? Activity
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val uiState = remember { mutableStateOf(ProfileUiState()) }
 
+    // Estado de permisos
+    var hasPermission by remember { mutableStateOf(hasLocationPermission(context)) }
+
+    // Refresca el perfil y permisos al iniciar
     LaunchedEffect(Unit) {
         uiState.value = readProfile(context).first()
+        hasPermission = hasLocationPermission(context)
+    }
+
+    // Refresca el permiso cada vez que el composable vuelve a primer plano
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasPermission = hasLocationPermission(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Scaffold(
@@ -173,9 +225,40 @@ fun ProfileScreen(
                         onChange = { uiState.value = it }
                     )
 
-                    Spacer(Modifier.height(12.dp))
+                    /*** SWITCH DE UBICACION ENTRE FORM Y BOTONES ***/
+                    Spacer(Modifier.height(14.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Clima usando mi ubicación", fontWeight = FontWeight.Medium)
+                        Switch(
+                            checked = hasPermission,
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    if (!hasPermission) {
+                                        if (activity != null && isPermissionPermanentlyDenied(activity)) {
+                                            openAppPermissionSettings(context)
+                                        } else if (activity != null) {
+                                            requestLocationPermission(activity)
+                                        }
+                                    }
+                                } else {
+                                    openAppPermissionSettings(context)
+                                }
+                                // El switch se refresca con el estado real automáticamente gracias al observer
+                            }
+                        )
+                    }
+                    Spacer(Modifier.height(14.dp))
+
+                    // BOTONES
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Button(
@@ -190,7 +273,15 @@ fun ProfileScreen(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
-                        ) { Text("Guardar Cambios", color = Color.White) }
+                        ) {
+                            Text(
+                                "Guardar cambios",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
 
                         OutlinedButton(
                             onClick = onBack,
@@ -217,7 +308,6 @@ fun ProfileScreen(
 }
 
 /* ---------- Subvistas ---------- */
-
 @Composable
 private fun PersonalForm(state: ProfileUiState, onChange: (ProfileUiState) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -226,7 +316,6 @@ private fun PersonalForm(state: ProfileUiState, onChange: (ProfileUiState) -> Un
         LabeledField("Teléfono", state.phone) { onChange(state.copy(phone = it)) }
         LabeledField("Empresa", state.company) { onChange(state.copy(company = it)) }
         LabeledField("Cargo", state.role) { onChange(state.copy(role = it)) }
-        LabeledField("Ubicación", state.location) { onChange(state.copy(location = it)) }
     }
 }
 
@@ -244,8 +333,8 @@ private fun LabeledField(label: String, value: String, onValue: (String) -> Unit
     }
 }
 
-/* ---------- Helpers ---------- */
 
+// Obtiene iniciales para el avatar circular.
 private fun initialsOf(name: String): String =
     name.trim().split(" ").filter { it.isNotBlank() }.take(2)
         .joinToString("") { it.first().uppercase() }
