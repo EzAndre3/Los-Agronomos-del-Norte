@@ -1,5 +1,6 @@
 package com.example.agromo.formulario
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.agromo.formulario.data.FormularioEntity
+import com.example.agromo.data.FormularioEntity
+import com.example.agromo.ui.form.RegistroFormularioViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,21 +35,11 @@ fun RegistroFormularioScreen(
 ) {
     val context = LocalContext.current
     val repository = FormularioRepository(context)
-    val viewModel: FormularioListViewModel = viewModel(
-        factory = FormularioListViewModel.Factory(repository)
-    )
-
+    val viewModel: RegistroFormularioViewModel = viewModel()
 
     val totalSteps = 7
     var step by remember { mutableStateOf(0) }
-
-    // Estados de formulario
-    var ubicacion by remember { mutableStateOf(TextFieldValue("")) }
-    var usarUbicacionActual by remember { mutableStateOf(false) }
-    var cultivoQuery by remember { mutableStateOf(TextFieldValue("")) }
-    val cultivos = listOf("Maíz", "Algodón", "Arroz", "Café", "Cacao", "Frijol")
-    var seleccionCultivos by remember { mutableStateOf(setOf<String>()) }
-    var humedad by remember { mutableStateOf(TextFieldValue("")) }
+    val coroutineScope = rememberCoroutineScope() // Para lanzar saveFormulario
 
     Scaffold(
         containerColor = Color.White,
@@ -58,7 +50,7 @@ fun RegistroFormularioScreen(
                     IconButton(onClick = {
                         if (step == 0) onBack() else step = (step - 1).coerceAtLeast(0)
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
@@ -80,13 +72,11 @@ fun RegistroFormularioScreen(
                     if (step < totalSteps - 1) {
                         step += 1
                     } else {
-                        val nuevoFormulario = FormularioEntity(
-                            id = "FORM-${System.currentTimeMillis()}",
-                            ubicacion = ubicacion.text,
-                            cultivo = seleccionCultivos.joinToString(", "),
-                            humedad = humedad.text
-                        )
-                        viewModel.addFormulario(nuevoFormulario)
+                        val finalForm = viewModel.guardarFormulario()
+                        coroutineScope.launch {
+                            repository.saveFormulario(finalForm)
+                        }
+                        Log.d("FORMULARIO", "Formulario guardado: $finalForm")
                         onNext()
                     }
                 },
@@ -116,30 +106,13 @@ fun RegistroFormularioScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (step) {
-                0 -> StepUbicacion(
-                    ubicacion = ubicacion,
-                    onUbicacionChange = { ubicacion = it },
-                    usarActual = usarUbicacionActual,
-                    onToggleUsarActual = { usarUbicacionActual = it }
-                )
-                1 -> StepVariedad(
-                    cultivoQuery = cultivoQuery,
-                    onCultivoQueryChange = { cultivoQuery = it },
-                    cultivos = cultivos,
-                    seleccionCultivos = seleccionCultivos,
-                    onToggleCultivo = {
-                        seleccionCultivos = if (seleccionCultivos.contains(it)) {
-                            seleccionCultivos - it
-                        } else {
-                            seleccionCultivos + it
-                        }
-                    }
-                )
-                2 -> StepHumedad(humedad = humedad, onHumedadChange = { humedad = it })
-                3 -> SteppH()
-                4 -> StepAltura()
-                5 -> StepFenologico()
-                6 -> StepFollaje() // Si quieres incluir StepFertilidad puedes reemplazar o agregar un paso extra
+                0 -> StepUbicacion(viewModel)
+                1 -> StepVariedad(viewModel)
+                2 -> StepHumedad(viewModel)
+                3 -> SteppH(viewModel)
+                4 -> StepAltura(viewModel)
+                5 -> StepFenologico(viewModel)
+                6 -> StepFollaje(viewModel)
             }
 
             Spacer(modifier = Modifier.height(120.dp))
@@ -170,22 +143,36 @@ fun StepIndicator(current: Int, total: Int) {
 }
 
 @Composable
-fun StepUbicacion(
-    ubicacion: TextFieldValue,
-    onUbicacionChange: (TextFieldValue) -> Unit,
-    usarActual: Boolean,
-    onToggleUsarActual: (Boolean) -> Unit
-) {
+fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
+    var ubicacion by remember { mutableStateOf(TextFieldValue("")) }
+    var usarActual by remember { mutableStateOf(false) }
+
     Column {
         Text("Registro del Cultivo", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(4.dp))
-        Text("Complete los datos que disponga; el resto puede omitirse.", color = Color.Gray, fontSize = 14.sp)
+        Text(
+            "Complete los datos que disponga; el resto puede omitirse.",
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
         Spacer(Modifier.height(20.dp))
+
         Text("Indique la ubicación de su cultivo", fontSize = 16.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(16.dp))
 
         OutlinedButton(
-            onClick = { onToggleUsarActual(!usarActual) },
+            onClick = {
+                usarActual = !usarActual
+                if (usarActual) {
+                    // Simulación: aquí puedes luego integrar un servicio real de ubicación
+                    val ubicacionActual = "Ubicación actual detectada"
+                    ubicacion = TextFieldValue(ubicacionActual)
+                    viewModel.updateUbicacion(ubicacionActual)
+                } else {
+                    ubicacion = TextFieldValue("")
+                    viewModel.updateUbicacion("")
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF33691E))
@@ -199,8 +186,11 @@ fun StepUbicacion(
 
         OutlinedTextField(
             value = ubicacion,
-            onValueChange = onUbicacionChange,
-            label = { Text("Busca por ciudad") },
+            onValueChange = {
+                ubicacion = it
+                viewModel.updateUbicacion(it.text) // ✅ actualiza el ViewModel
+            },
+            label = { Text("Busca por ciudad o localidad") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp)
@@ -209,25 +199,29 @@ fun StepUbicacion(
 }
 
 @Composable
-fun StepVariedad(
-    cultivoQuery: TextFieldValue,
-    onCultivoQueryChange: (TextFieldValue) -> Unit,
-    cultivos: List<String>,
-    seleccionCultivos: Set<String>,
-    onToggleCultivo: (String) -> Unit
-) {
+fun StepVariedad(viewModel: RegistroFormularioViewModel) {
+    var cultivoQuery by remember { mutableStateOf(TextFieldValue("")) }
+    var cultivos = listOf("Maíz", "Trigo", "Sorgo", "Cebada", "Avena", "Frijol", "Soya", "Caña de azúcar", "Papa", "Tomate")
+    var seleccionCultivos by remember { mutableStateOf(setOf<String>()) }
+
+    var fechaSiembra by remember { mutableStateOf(TextFieldValue("")) }
+    var errorFecha by remember { mutableStateOf(false) }
+
     Column {
         Text("Información general del cultivo", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(4.dp))
         Text("¿Qué cultivo y variedad tiene sembrado?", color = Color.Gray, fontSize = 14.sp)
         Spacer(Modifier.height(20.dp))
 
+        // Card decorativa (puedes añadir más detalles aquí si lo necesitas)
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FCEB)),
             shape = RoundedCornerShape(12.dp)
         ) {
-
+            Box(Modifier.padding(16.dp)) {
+                Text("Selecciona uno o varios cultivos de la lista, o búscalos manualmente.")
+            }
         }
 
         Spacer(Modifier.height(20.dp))
@@ -236,28 +230,45 @@ fun StepVariedad(
 
         OutlinedTextField(
             value = cultivoQuery,
-            onValueChange = onCultivoQueryChange,
+            onValueChange = {
+                cultivoQuery = it
+                viewModel.updateCultivo(it.text) // ✅ Actualiza en el ViewModel
+            },
             label = { Text("Busca por cultivo") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp)
         )
+
         Spacer(Modifier.height(12.dp))
 
         val verdeBoton = Color(0xFF33691E)
+        val cultivosFiltrados = cultivos.filter {
+            it.contains(cultivoQuery.text, ignoreCase = true)
+        }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            cultivos.forEach { c ->
+            cultivosFiltrados.forEach { c ->
+                val isSelected = seleccionCultivos.contains(c)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onToggleCultivo(c) }
+                        .clickable {
+                            seleccionCultivos =
+                                if (isSelected) seleccionCultivos - c else seleccionCultivos + c
+                            // ✅ Actualiza cultivo al seleccionar
+                            viewModel.updateCultivo(c)
+                        }
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
-                        checked = seleccionCultivos.contains(c),
-                        onCheckedChange = { onToggleCultivo(c) },
+                        checked = isSelected,
+                        onCheckedChange = {
+                            seleccionCultivos =
+                                if (isSelected) seleccionCultivos - c else seleccionCultivos + c
+                            viewModel.updateCultivo(c)
+                        },
                         colors = CheckboxDefaults.colors(
                             checkedColor = verdeBoton,
                             uncheckedColor = Color.Gray,
@@ -270,13 +281,14 @@ fun StepVariedad(
             }
         }
 
-        var fechaSiembra by remember { mutableStateOf(TextFieldValue("")) }
-        var errorFecha by remember { mutableStateOf(false) }
+        Spacer(Modifier.height(20.dp))
+        Text("Fecha de la siembra", fontSize = 16.sp)
+        Spacer(Modifier.height(8.dp))
 
         OutlinedTextField(
             value = fechaSiembra,
             onValueChange = { input ->
-                // Filtrar solo los números
+                // Filtrar solo números
                 val digits = input.text.filter { it.isDigit() }.take(8)
 
                 // Aplicar formato dd/mm/aaaa
@@ -295,11 +307,15 @@ fun StepVariedad(
                     dia !in 1..31 || mes !in 1..12
                 } else false
 
-                // Actualizar con el cursor al final
                 fechaSiembra = TextFieldValue(
                     text = formatted,
                     selection = TextRange(formatted.length)
                 )
+
+                // ✅ Actualiza en ViewModel si la fecha es válida
+                if (!errorFecha) {
+                    viewModel.updateFechaSiembra(formatted)
+                }
             },
             label = { Text("Fecha de la siembra (dd/mm/aaaa)") },
             isError = errorFecha,
@@ -307,38 +323,46 @@ fun StepVariedad(
             shape = RoundedCornerShape(10.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             supportingText = {
-                if (errorFecha) Text("Fecha inválida", color = Color.Red, fontSize = 12.sp)
+                if (errorFecha)
+                    Text("Fecha inválida", color = Color.Red, fontSize = 12.sp)
             }
         )
     }
 }
 
 @Composable
-fun StepHumedad(
-    humedad: TextFieldValue,
-    onHumedadChange: (TextFieldValue) -> Unit
-) {
+fun StepHumedad(viewModel: RegistroFormularioViewModel) {
+    var humedad by remember { mutableStateOf(TextFieldValue("")) }
+    var errorHumedad by remember { mutableStateOf(false) }
+
     Column {
         Text("Suelo y condiciones", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(4.dp))
-        Text("Ingresar la humedad en la escala si es manualmente o anote el valor si posee un sensor.", color = Color.Gray, fontSize = 14.sp)
+        Text(
+            "Ingrese la humedad en porcentaje (0–100). Si tiene un sensor, anote el valor obtenido; si no, estime manualmente.",
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
         Spacer(Modifier.height(20.dp))
 
         Text("Humedad del suelo", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
 
-        var humedad by remember { mutableStateOf("") }
-        var errorHumedad by remember { mutableStateOf(false) }
-
         OutlinedTextField(
             value = humedad,
             onValueChange = { input ->
-                val digits = input.filter { it.isDigit() }.take(3)
+                // Solo aceptar dígitos y limitar a 3 caracteres
+                val digits = input.text.filter { it.isDigit() }.take(3)
                 val valor = digits.toIntOrNull() ?: 0
 
                 if (valor in 0..100) {
-                    humedad = digits
+                    // Cursor siempre al final
+                    humedad = TextFieldValue(
+                        text = digits,
+                        selection = TextRange(digits.length)
+                    )
                     errorHumedad = false
+                    viewModel.updateHumedad(digits) // ✅ actualiza el ViewModel
                 } else {
                     errorHumedad = true
                 }
@@ -349,29 +373,35 @@ fun StepHumedad(
             shape = RoundedCornerShape(10.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             supportingText = {
-                if (errorHumedad) Text("El valor no puede superar 100%", color = Color.Red, fontSize = 12.sp)
+                if (errorHumedad)
+                    Text("El valor debe estar entre 0% y 100%", color = Color.Red, fontSize = 12.sp)
             }
         )
     }
 }
 
+
 @Composable
-fun SteppH() {
+fun SteppH(viewModel: RegistroFormularioViewModel) {
     var ph by remember { mutableStateOf(TextFieldValue("")) }
-    var selectedMedidor by remember { mutableStateOf<String?>(null) } // Estado para guardar el seleccionado
+    var selectedMedidor by remember { mutableStateOf<String?>(null) } // Guarda el tipo de medidor
 
     Column {
         Text("Nivel del pH", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(8.dp))
         Text(
             "Indique el nivel de pH del suelo. Si tiene dudas, especifique el tipo de medición que utilizó y siga las instrucciones correspondientes.",
-            color = Color.Gray, fontSize = 14.sp
+            color = Color.Gray,
+            fontSize = 14.sp
         )
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
             value = ph,
-            onValueChange = { ph = it },
+            onValueChange = {
+                ph = it
+                viewModel.updatePH(it.text, selectedMedidor ?: "")
+            },
             label = { Text("Nivel de pH (0-14)") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp)
@@ -385,22 +415,24 @@ fun SteppH() {
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             medidores.forEach { tipo ->
-                val isSelected = tipo == selectedMedidor
+                val isSelected = selectedMedidor == tipo
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { selectedMedidor = tipo },
+                        .clickable {
+                            selectedMedidor = tipo
+                            viewModel.updatePH(ph.text, tipo)
+                        },
                     colors = CardDefaults.cardColors(
                         containerColor = if (isSelected) Color(0xFF33691E) else Color(0xFFF4FBE8)
                     ),
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        tipo,
-                        Modifier
-                            .padding(16.dp),
-                        color = if (isSelected) Color.White else Color.Black // texto blanco si está seleccionado
+                        text = tipo,
+                        modifier = Modifier.padding(16.dp),
+                        color = if (isSelected) Color.White else Color.Black
                     )
                 }
             }
@@ -409,9 +441,10 @@ fun SteppH() {
 }
 
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepFertilidad() {
+fun StepFertilidad(viewModel: RegistroFormularioViewModel) {
     var nivelFertilidadExpanded by remember { mutableStateOf(false) }
     var nivelFertilidad by remember { mutableStateOf("Nivel de fertilidad") }
 
@@ -424,11 +457,19 @@ fun StepFertilidad() {
     Column {
         Text("Fertilidad del suelo", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(8.dp))
-        Text("Indique la fertilidad del suelo, ya sea mediante análisis digital o manual.", color = Color.Gray, fontSize = 14.sp)
+        Text(
+            "Indique la fertilidad del suelo, ya sea mediante análisis digital o manual.",
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
         Spacer(Modifier.height(16.dp))
 
+        // ----------------------
+        // NIVEL MANUAL
+        // ----------------------
         Text("Registro manual", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
+
         ExposedDropdownMenuBox(
             expanded = nivelFertilidadExpanded,
             onExpandedChange = { nivelFertilidadExpanded = !nivelFertilidadExpanded }
@@ -439,9 +480,12 @@ fun StepFertilidad() {
                 readOnly = true,
                 label = { Text("Nivel de fertilidad") },
                 modifier = Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
+                    .menuAnchor()
                     .fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(10.dp),
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = nivelFertilidadExpanded)
+                }
             )
             ExposedDropdownMenu(
                 expanded = nivelFertilidadExpanded,
@@ -453,6 +497,7 @@ fun StepFertilidad() {
                         onClick = {
                             nivelFertilidad = it
                             nivelFertilidadExpanded = false
+                            viewModel.updateFertilidadManual(it)
                         }
                     )
                 }
@@ -460,40 +505,62 @@ fun StepFertilidad() {
         }
 
         Spacer(Modifier.height(20.dp))
+
+        // ----------------------
+        // SENSOR DIGITAL
+        // ----------------------
         Text("Registro con sensor digital", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
 
         listOf(
-            "Nitrógeno (N)" to "Valor mg/kg",
-            "Fósforo (P)" to "Valor mg/kg",
-            "Potasio (K)" to "Valor mg/kg",
-            "Materia Orgánica" to "Valor %",
-            "CIC" to "Valor (cmol/kg)"
-        ).forEach { (label, placeholder) ->
+            "Nitrógeno (N)" to "mg/kg",
+            "Fósforo (P)" to "mg/kg",
+            "Potasio (K)" to "mg/kg",
+            "Materia Orgánica" to "%",
+            "CIC" to "cmol/kg"
+        ).forEach { (label, unidad) ->
+            val valor = when (label) {
+                "Nitrógeno (N)" -> nitrogeno
+                "Fósforo (P)" -> fosforo
+                "Potasio (K)" -> potasio
+                "Materia Orgánica" -> materia
+                "CIC" -> cic
+                else -> ""
+            }
+
             OutlinedTextField(
-                value = when (label) {
-                    "Nitrógeno (N)" -> nitrogeno
-                    "Fósforo (P)" -> fosforo
-                    "Potasio (K)" -> potasio
-                    "Materia Orgánica" -> materia
-                    "CIC" -> cic
-                    else -> ""
-                },
+                value = valor,
                 onValueChange = {
                     when (label) {
-                        "Nitrógeno (N)" -> nitrogeno = it
-                        "Fósforo (P)" -> fosforo = it
-                        "Potasio (K)" -> potasio = it
-                        "Materia Orgánica" -> materia = it
-                        "CIC" -> cic = it
+                        "Nitrógeno (N)" -> {
+                            nitrogeno = it
+                            viewModel.updateNutriente("N", it)
+                        }
+                        "Fósforo (P)" -> {
+                            fosforo = it
+                            viewModel.updateNutriente("P", it)
+                        }
+                        "Potasio (K)" -> {
+                            potasio = it
+                            viewModel.updateNutriente("K", it)
+                        }
+                        "Materia Orgánica" -> {
+                            materia = it
+                            viewModel.updateNutriente("MO", it)
+                        }
+                        "CIC" -> {
+                            cic = it
+                            viewModel.updateNutriente("CIC", it)
+                        }
                     }
                 },
                 label = { Text(label) },
-                placeholder = { Text(placeholder) },
+                placeholder = { Text("Valor $unidad") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(10.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
         }
     }
@@ -501,7 +568,7 @@ fun StepFertilidad() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepAltura() {
+fun StepAltura(viewModel: RegistroFormularioViewModel) {
     var altura by remember { mutableStateOf(TextFieldValue("")) }
     var metodo by remember { mutableStateOf("Seleccione un método") }
     var expandedMetodo by remember { mutableStateOf(false) }
@@ -517,21 +584,30 @@ fun StepAltura() {
         Spacer(Modifier.height(8.dp))
         Text(
             "Mida la altura promedio de las plantas, tomando como referencia un valor promedio (no la más baja ni la más alta).",
-            color = Color.Gray, fontSize = 14.sp
+            color = Color.Gray,
+            fontSize = 14.sp
         )
         Spacer(Modifier.height(20.dp))
 
+        // ------------------------
+        // Altura registrada
+        // ------------------------
         OutlinedTextField(
             value = altura,
-            onValueChange = { altura = it },
+            onValueChange = {
+                altura = it
+                viewModel.updateAltura(altura.text, metodo)
+            },
             label = { Text("Altura registrada (cm)") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
+            shape = RoundedCornerShape(10.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
         Spacer(Modifier.height(16.dp))
         Text("Método de medición", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
+
 
         ExposedDropdownMenuBox(
             expanded = expandedMetodo,
@@ -542,9 +618,15 @@ fun StepAltura() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione un método") },
-                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMetodo)
+                }
             )
+
             ExposedDropdownMenu(
                 expanded = expandedMetodo,
                 onDismissRequest = { expandedMetodo = false }
@@ -555,6 +637,7 @@ fun StepAltura() {
                         onClick = {
                             metodo = it
                             expandedMetodo = false
+                            viewModel.updateAltura(altura.text, it)
                         }
                     )
                 }
@@ -566,7 +649,7 @@ fun StepAltura() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepFenologico() {
+fun StepFenologico(viewModel: RegistroFormularioViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var estado by remember { mutableStateOf("Seleccione estado") }
     var observaciones by remember { mutableStateOf("") }
@@ -574,25 +657,45 @@ fun StepFenologico() {
     Column {
         Text("Estado fenológico de la planta", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(8.dp))
-        Text("Seleccione una opción en el menú desplegable.", color = Color.Gray, fontSize = 14.sp)
+        Text(
+            "Seleccione una opción en el menú desplegable.",
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
         Spacer(Modifier.height(20.dp))
 
-        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+        // ----------------------------
+        // Menú desplegable (estado fenológico)
+        // ----------------------------
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
             OutlinedTextField(
                 value = estado,
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Estado fenológico") },
-                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
             )
-            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
                 listOf("Germinación", "Floración", "Maduración", "Cosecha").forEach {
                     DropdownMenuItem(
                         text = { Text(it) },
                         onClick = {
                             estado = it
                             expanded = false
+                            viewModel.updateFenologico(it, observaciones) // pasa también las observaciones actuales
                         }
                     )
                 }
@@ -600,13 +703,26 @@ fun StepFenologico() {
         }
 
         Spacer(Modifier.height(12.dp))
-        OutlinedTextField(value = observaciones, onValueChange = { observaciones = it }, label = { Text("Observaciones") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp))
+
+        // ----------------------------
+        // Campo de observaciones
+        // ----------------------------
+        OutlinedTextField(
+            value = observaciones,
+            onValueChange = {
+                observaciones = it
+                viewModel.updateFenologico(estado, it) // pasa también el estado actual
+            },
+            label = { Text("Observaciones") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp)
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StepFollaje() {
+fun StepFollaje(viewModel: RegistroFormularioViewModel) {
     var densidad by remember { mutableStateOf("Seleccione una opción") }
     var color by remember { mutableStateOf("Seleccione una opción") }
     var estado by remember { mutableStateOf("Seleccione una opción") }
@@ -629,7 +745,9 @@ fun StepFollaje() {
         )
         Spacer(Modifier.height(20.dp))
 
-        // Densidad
+        // --------------------------
+        // Densidad del follaje
+        // --------------------------
         Text("Densidad del follaje", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
         ExposedDropdownMenuBox(
@@ -641,8 +759,9 @@ fun StepFollaje() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDensidad) }
             )
             ExposedDropdownMenu(
                 expanded = expandedDensidad,
@@ -654,6 +773,7 @@ fun StepFollaje() {
                         onClick = {
                             densidad = it
                             expandedDensidad = false
+                            viewModel.updateFollaje(densidad, color, estado)
                         }
                     )
                 }
@@ -662,7 +782,9 @@ fun StepFollaje() {
 
         Spacer(Modifier.height(16.dp))
 
-        // Color
+        // --------------------------
+        // Color del follaje
+        // --------------------------
         Text("Color predominante del follaje", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
         ExposedDropdownMenuBox(
@@ -674,8 +796,9 @@ fun StepFollaje() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedColor) }
             )
             ExposedDropdownMenu(
                 expanded = expandedColor,
@@ -687,6 +810,7 @@ fun StepFollaje() {
                         onClick = {
                             color = it
                             expandedColor = false
+                            viewModel.updateFollaje(densidad, color, estado)
                         }
                     )
                 }
@@ -695,7 +819,9 @@ fun StepFollaje() {
 
         Spacer(Modifier.height(16.dp))
 
-        // Estado general
+        // --------------------------
+        // Estado general del follaje
+        // --------------------------
         Text("Estado general del follaje", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
         ExposedDropdownMenuBox(
@@ -707,8 +833,9 @@ fun StepFollaje() {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEstado) }
             )
             ExposedDropdownMenu(
                 expanded = expandedEstado,
@@ -720,6 +847,7 @@ fun StepFollaje() {
                         onClick = {
                             estado = it
                             expandedEstado = false
+                            viewModel.updateFollaje(densidad, color, estado)
                         }
                     )
                 }

@@ -1,36 +1,73 @@
-package com.example.agromo.formulario
+package com.example.agromo.ui.form
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import com.example.agromo.formulario.data.FormularioEntity
-import kotlinx.coroutines.launch
+import com.example.agromo.data.FormularioEntity
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
-class FormularioListViewModel(private val repository: FormularioRepository) : ViewModel() {
+class RegistroFormularioViewModel : ViewModel() {
 
-    private val _formularios = mutableListOf<FormularioEntity>()
-    val formularios: List<FormularioEntity> get() = _formularios
+    // Estado principal del formulario
+    private val _formulario = MutableStateFlow(FormularioEntity())
+    val formulario: StateFlow<FormularioEntity> = _formulario
 
-    init {
-        viewModelScope.launch {
-            repository.getFormularios().collect { list ->
-                _formularios.clear()
-                _formularios.addAll(list)
-            }
-        }
+    // 🔹 Actualizaciones de campos
+    fun updateUbicacion(ubicacion: String) {
+        _formulario.value = _formulario.value.copy(ubicacion = ubicacion)
     }
 
-    fun addFormulario(formulario: FormularioEntity) {
-        _formularios.add(formulario)
-        viewModelScope.launch {
-            repository.saveFormulario(formulario)
-        }
+    fun updateCultivo(cultivo: String) {
+        _formulario.value = _formulario.value.copy(cultivo = cultivo)
     }
 
-    class Factory(private val repository: FormularioRepository) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            @Suppress("UNCHECKED_CAST")
-            return FormularioListViewModel(repository) as T
-        }
+    fun updateFechaSiembra(fecha: String) {
+        _formulario.value = _formulario.value.copy(fechaSiembra = fecha)
     }
+
+    fun updateHumedad(humedad: String) {
+        _formulario.value = _formulario.value.copy(humedadTierra = humedad)
+    }
+
+    fun updatePH(ph: String, metodo: String) {
+        _formulario.value = _formulario.value.copy(ph = ph, metodoPH = metodo)
+    }
+
+    fun updateAltura(altura: String, metodo: String) {
+        _formulario.value = _formulario.value.copy(
+            alturaPlanta = altura,
+            metodoAltura = metodo
+        )
+    }
+
+    fun updateFenologico(estado: String, observaciones: String) {
+        _formulario.value = _formulario.value.copy(
+            estadoFenologico = estado,
+            observaciones = observaciones
+        )
+    }
+
+    fun updateFollaje(densidad: String, color: String, estado: String) {
+        _formulario.value = _formulario.value.copy(
+            densidadFollaje = densidad,
+            colorFollaje = color,
+            estadoFollaje = estado
+        )
+    }
+
+    fun updateFertilidadManual(nivel: String) {
+        _formulario.value = _formulario.value.copy(nivelFertilidadManual = nivel)
+    }
+
+    fun updateNutriente(tipo: String, valor: String) {
+        _formulario.value = _formulario.value.copy(
+            nitrogeno = if (tipo == "N") valor else _formulario.value.nitrogeno,
+            fosforo = if (tipo == "P") valor else _formulario.value.fosforo,
+            potasio = if (tipo == "K") valor else _formulario.value.potasio,
+            materiaOrganica = if (tipo == "MO") valor else _formulario.value.materiaOrganica,
+            cic = if (tipo == "CIC") valor else _formulario.value.cic
+        )
+    }
+
+    // 🔹 Guardar/obtener formulario
+    fun guardarFormulario(): FormularioEntity = _formulario.value
 }
