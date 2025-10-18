@@ -1,8 +1,9 @@
-package com.example.agromo.data
+package com.example.agromo.formulario
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.example.agromo.data.FormularioEntity
 
 class RegistroFormularioViewModel(private val repository: FormularioRepository) : ViewModel() {
 

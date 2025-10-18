@@ -1,4 +1,7 @@
-package com.example.agromo.data
+package com.example.agromo.formulario
+
+import com.example.agromo.data.FormularioDao
+import com.example.agromo.data.FormularioEntity
 
 class FormularioRepository(private val dao: FormularioDao) {
     suspend fun saveFormulario(formulario: FormularioEntity) {
