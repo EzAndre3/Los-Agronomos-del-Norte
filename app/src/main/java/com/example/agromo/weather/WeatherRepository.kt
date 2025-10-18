@@ -49,46 +49,51 @@ private val moshi = Moshi.Builder()
 
 // Función de suspensión para obtener el clima
 suspend fun getWeather(latitude: Double, longitude: Double): WeatherInfo? {
-    // URL actualizada para pedir humedad y probabilidad de precipitación
-    val url = "https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current_weather=true&hourly=relativehumidity_2m,precipitation_probability&forecast_days=1"
-    val request = Request.Builder().url(url).build()
-
-    val response = client.newCall(request).await()
-
-    if (!response.isSuccessful) {
-        response.close()
-        return null
-    }
-
-    val body = response.body?.string()
-    if (body == null) {
-        response.close()
-        return null
-    }
-
     return try {
-        val adapter = moshi.adapter(OpenMeteoResponse::class.java)
-        val weatherResponse = adapter.fromJson(body)
-        if (weatherResponse != null) {
-            // Tomamos el primer valor de la lista para humedad y precipitación
-            val humidity = weatherResponse.hourly.relativehumidity_2m.firstOrNull() ?: 0
-            val precipitation = weatherResponse.hourly.precipitation_probability.firstOrNull() ?: 0
+        val url = "https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current_weather=true&hourly=relativehumidity_2m,precipitation_probability&forecast_days=1"
+        val request = Request.Builder().url(url).build()
 
-            WeatherInfo(
-                temperature = weatherResponse.current_weather.temperature,
-                description = weatherCodeToDescription(weatherResponse.current_weather.weathercode),
-                humidity = humidity,
-                windSpeed = weatherResponse.current_weather.windspeed,
-                precipitationProbability = precipitation
-            )
-        } else {
-            null
+        val response = client.newCall(request).await()
+
+        if (!response.isSuccessful) {
+            response.close()
+            return null
         }
-    } catch (e: Exception) {
+
+        val body = response.body?.string()
+        if (body == null) {
+            response.close()
+            return null
+        }
+
+        try {
+            val adapter = moshi.adapter(OpenMeteoResponse::class.java)
+            val weatherResponse = adapter.fromJson(body)
+            if (weatherResponse != null) {
+                // Tomamos el primer valor de la lista para humedad y precipitación
+                val humidity = weatherResponse.hourly.relativehumidity_2m.firstOrNull() ?: 0
+                val precipitation = weatherResponse.hourly.precipitation_probability.firstOrNull() ?: 0
+
+                WeatherInfo(
+                    temperature = weatherResponse.current_weather.temperature,
+                    description = weatherCodeToDescription(weatherResponse.current_weather.weathercode),
+                    humidity = humidity,
+                    windSpeed = weatherResponse.current_weather.windspeed,
+                    precipitationProbability = precipitation
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        } finally {
+            response.close()
+        }
+    } catch (e: IOException) {
+        // Si ocurre un error de red (sin conexión), lo capturamos y devolvemos null
         e.printStackTrace()
         null
-    } finally {
-        response.close()
     }
 }
 

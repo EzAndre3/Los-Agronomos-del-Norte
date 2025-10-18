@@ -8,10 +8,12 @@ import com.example.agromo.data.FormularioEntity
 import com.example.agromo.location.getLastKnownLocation
 import com.example.agromo.weather.getCityName
 import com.example.agromo.weather.getWeather
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import android.location.Location
+import kotlinx.coroutines.withContext
 
 class DashboardViewModel(application: Application, private val formularioDao: FormularioDao) : AndroidViewModel(application) {
 
@@ -26,36 +28,75 @@ class DashboardViewModel(application: Application, private val formularioDao: Fo
         )
 
     fun loadWeather() {
-        viewModelScope.launch {
+        // Lanza toda la operación en un hilo de fondo para no bloquear jamás el hilo principal.
+        viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>().applicationContext
-            val location: Location? = getLastKnownLocation(context)
-            if (location != null) {
+            try {
+                val location: Location? = getLastKnownLocation(context)
 
-                // <<< LÓGICA MODIFICADA AQUÍ >>>
-                // Ejecuta la obtención del clima y el nombre de la ciudad en paralelo
-                val weatherJob = async { getWeather(location.latitude, location.longitude) }
-                val cityJob = async { getCityName(context, location.latitude, location.longitude) }
+                if (location != null) {
+                    val weatherJob = async { getWeather(location.latitude, location.longitude) }
+                    val cityJob = async { getCityName(context, location.latitude, location.longitude) }
 
-                // Espera a que ambos terminen
-                val weather = weatherJob.await()
-                val cityName = cityJob.await()
+                    val weather = weatherJob.await()
+                    val cityName = cityJob.await()
 
-                if (weather != null) {
-                    val isFavorable = weather.windSpeed < 15 && weather.precipitationProbability < 20
-                    val status = if (isFavorable) SprayStatus.FAVORABLE else SprayStatus.UNFAVORABLE
+                    val newState = if (weather != null) {
+                        val isFavorable = weather.windSpeed < 15 && weather.precipitationProbability < 20
+                        val status = if (isFavorable) SprayStatus.FAVORABLE else SprayStatus.UNFAVORABLE
 
-                    _weatherState.value = WeatherState(
-                        locationName = cityName, // Usamos el nombre de la ciudad obtenido
-                        temperature = "${weather.temperature.toInt()}ºC",
-                        description = weather.description,
-                        humidity = "${weather.humidity}%",
-                        windSpeed = "${weather.windSpeed.toInt()} Km/h",
-                        precipitation = "${weather.precipitationProbability}%",
-                        sprayStatus = status
-                    )
+                        WeatherState(
+                            locationName = cityName,
+                            temperature = "${weather.temperature.toInt()}ºC",
+                            description = weather.description,
+                            humidity = "${weather.humidity}%",
+                            windSpeed = "${weather.windSpeed.toInt()} Km/h",
+                            precipitation = "${weather.precipitationProbability}%",
+                            sprayStatus = status
+                        )
+                    } else {
+                        WeatherState(
+                            locationName = cityName,
+                            temperature = "--",
+                            description = "No se pudo obtener el clima",
+                            humidity = "--",
+                            windSpeed = "--",
+                            precipitation = "--",
+                            sprayStatus = SprayStatus.UNKNOWN
+                        )
+                    }
+                    // Una vez que todoel trabajo está hecho, actualiza la UI en el hilo principal.
+                    withContext(Dispatchers.Main) {
+                        _weatherState.value = newState
+                    }
                 } else {
-                    // Si el clima falla, al menos mostramos la ciudad
-                    _weatherState.value = _weatherState.value.copy(locationName = cityName)
+                    // Si no hay ubicación, crea el estado de error y actualiza la UI.
+                    val noLocationState = WeatherState(
+                        locationName = "Ubicación desconocida",
+                        temperature = "--",
+                        description = "Active la ubicación para obtener el clima",
+                        humidity = "--",
+                        windSpeed = "--",
+                        precipitation = "--",
+                        sprayStatus = SprayStatus.UNKNOWN
+                    )
+                    withContext(Dispatchers.Main) {
+                        _weatherState.value = noLocationState
+                    }
+                }
+            } catch (e: Exception) {
+                // Si cualquier cosa falla (red, etc.), crea el estado de error y actualiza la UI.
+                val errorState = WeatherState(
+                    locationName = "Sin conexión",
+                    temperature = "--",
+                    description = "No se pudo cargar el clima",
+                    humidity = "--",
+                    windSpeed = "--",
+                    precipitation = "--",
+                    sprayStatus = SprayStatus.UNKNOWN
+                )
+                withContext(Dispatchers.Main) {
+                    _weatherState.value = errorState
                 }
             }
         }
@@ -63,13 +104,13 @@ class DashboardViewModel(application: Application, private val formularioDao: Fo
 }
 
 data class WeatherState(
-    val locationName: String = "Cargando...", // Hardcoded for now
+    val locationName: String = "Cargando...",
     val temperature: String = "--",
     val description: String = "Cargando...",
     val humidity: String = "--",
     val windSpeed: String = "--",
     val precipitation: String = "--",
-    val sprayStatus: SprayStatus = SprayStatus.UNKNOWN // Logic not implemented yet
+    val sprayStatus: SprayStatus = SprayStatus.UNKNOWN
 )
 
 enum class SprayStatus {
