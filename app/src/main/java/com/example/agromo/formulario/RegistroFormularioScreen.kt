@@ -21,10 +21,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.agromo.data.FormularioEntity
-import com.example.agromo.ui.form.RegistroFormularioViewModel
+import com.example.agromo.data.*
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,12 +32,19 @@ fun RegistroFormularioScreen(
     onBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val repository = FormularioRepository(context)
-    val viewModel: RegistroFormularioViewModel = viewModel()
+
+    val db = AppDatabase.getDatabase(context)
+    val dao = db.formularioDao()
+
+    val repository = remember { FormularioRepository(dao) }
+
+    val viewModel: RegistroFormularioViewModel = viewModel(
+        factory = RegistroFormularioViewModelFactory(repository)
+    )
 
     val totalSteps = 7
     var step by remember { mutableStateOf(0) }
-    val coroutineScope = rememberCoroutineScope() // Para lanzar saveFormulario
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = Color.White,
@@ -188,7 +193,7 @@ fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
             value = ubicacion,
             onValueChange = {
                 ubicacion = it
-                viewModel.updateUbicacion(it.text) // ✅ actualiza el ViewModel
+                viewModel.updateUbicacion(it.text) //
             },
             label = { Text("Busca por ciudad o localidad") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
@@ -232,7 +237,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
             value = cultivoQuery,
             onValueChange = {
                 cultivoQuery = it
-                viewModel.updateCultivo(it.text) // ✅ Actualiza en el ViewModel
+                viewModel.updateCultivo(it.text) //
             },
             label = { Text("Busca por cultivo") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
@@ -312,7 +317,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
                     selection = TextRange(formatted.length)
                 )
 
-                // ✅ Actualiza en ViewModel si la fecha es válida
+
                 if (!errorFecha) {
                     viewModel.updateFechaSiembra(formatted)
                 }
