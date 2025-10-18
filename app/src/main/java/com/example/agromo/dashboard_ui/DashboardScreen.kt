@@ -1,12 +1,14 @@
 package com.example.agromo.dashboard_ui
+
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
@@ -19,10 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.agromo.data.AppDatabase
+import com.example.agromo.data.FormularioEntity
 import com.example.agromo.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,10 +36,16 @@ fun DashboardScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToAiChat: () -> Unit,
     onNavigateToFormulario: () -> Unit,
-    onNavigateToQuickActionEdit: (String) -> Unit
+    onNavigateToQuickActionEdit: (String) -> Unit,
+    onNavigateToFormDetail: (String) -> Unit
 ) {
-    val viewModel: DashboardViewModel = viewModel()
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val formularioDao = db.formularioDao()
+    val viewModel: DashboardViewModel = viewModel(factory = DashboardViewModelFactory(context.applicationContext as Application, formularioDao))
+
     val weatherState by viewModel.weatherState.collectAsState()
+    val formularios by viewModel.formularios.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadWeather()
@@ -45,47 +56,107 @@ fun DashboardScreen(
             .fillMaxSize()
             .background(Primary50)
     ) {
-
         TopBarSection(onAvatarClick = onNavigateToProfile)
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                WeatherCard(
+                    location = weatherState.locationName,
+                    temperature = weatherState.temperature,
+                    description = weatherState.description,
+                    humidity = weatherState.humidity,
+                    wind = weatherState.windSpeed,
+                    rain = weatherState.precipitation,
+                    sprayStatus = weatherState.sprayStatus
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
-            WeatherCard(
-                location = weatherState.locationName,
-                temperature = weatherState.temperature,
-                description = weatherState.description,
-                humidity = weatherState.humidity,
-                wind = weatherState.windSpeed,
-                rain = weatherState.precipitation,
-                sprayStatus = weatherState.sprayStatus
+            item {
+                MonitoringCard(onStartMonitoring = onNavigateToFormulario)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            item {
+                QuickActionsSection(onCardClick = onNavigateToQuickActionEdit)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            item {
+                PhotographySection(onStartAiChat = onNavigateToAiChat)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            item {
+                 RecentReportsHeader()
+                 Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            if (formularios.isEmpty()) {
+                item {
+                    Text(
+                        text = "No hay informes recientes.",
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        color = Neutral700
+                    )
+                }
+            } else {
+                items(formularios) { formulario ->
+                    ReportCard(
+                        date = formulario.cultivo, // Using 'cultivo' for date for now
+                        cropType = formulario.cultivo,
+                        cropIcon = "🌶️", // Placeholder icon
+                        title = "Informe de ${formulario.cultivo}",
+                        status = "Completo", // Placeholder status
+                        statusColor = Primary600Intermediary,
+                        onClick = { onNavigateToFormDetail(formulario.id) }
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(100.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun RecentReportsHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Resumen de informes\nrecientes",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = ColorBlackWhiteBlack
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Ver todos",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Primary800P
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            MonitoringCard(onStartMonitoring = onNavigateToFormulario)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            QuickActionsSection(onCardClick = onNavigateToQuickActionEdit)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            PhotographySection(onStartAiChat = onNavigateToAiChat)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            RecentReportsSection()
-
-            Spacer(modifier = Modifier.height(100.dp))
+            Icon(
+                imageVector = Icons.Filled.ChevronRight,
+                contentDescription = "Ver todos",
+                tint = Primary800P,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
@@ -544,72 +615,19 @@ fun PhotoStepCard(number: String, title: String, icon: androidx.compose.ui.graph
 }
 
 @Composable
-fun RecentReportsSection() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Resumen de informes\nrecientes",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = ColorBlackWhiteBlack
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "Ver todos",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Primary800P
-                )
-                Icon(
-                    imageVector = Icons.Filled.ChevronRight,
-                    contentDescription = "Ver todos",
-                    tint = Primary800P,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-
-        ReportCard(
-            date = "12 sept",
-            cropType = "Pimiento",
-            cropIcon = "🌶️",
-            title = "Informe integral",
-            status = "Completo",
-            statusColor = Primary600Intermediary
-        )
-
-        ReportCard(
-            date = "23 sept",
-            cropType = "Café",
-            cropIcon = "☕",
-            title = "pH del suelo",
-            status = "Atender",
-            statusColor = Color(0xFFAE9721)
-        )
-    }
-}
-
-@Composable
 fun ReportCard(
     date: String,
     cropType: String,
     cropIcon: String,
     title: String,
     status: String,
-    statusColor: Color
+    statusColor: Color,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Neutral50),
         border = androidx.compose.foundation.BorderStroke(1.dp, Primary800P)

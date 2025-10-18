@@ -24,6 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.agromo.dashboard_ui.DashboardScreen
 import com.example.agromo.dashboard_ui.quickvalues.EditValueScreen
+import com.example.agromo.form_detail_ui.FormDetailScreen
 import com.example.agromo.formulario.RegistroFormularioScreen
 import com.example.agromo.login_ui.ForgotPasswordScreen
 import com.example.agromo.login_ui.LoginScreen
@@ -144,6 +145,9 @@ class MainActivity : ComponentActivity() {
                         onNavigateToProfile = { navController.navigate("profile") },
                         onNavigateToQuickActionEdit = { key ->
                             navController.navigate("editValue/$key")
+                        },
+                        onNavigateToFormDetail = { formId ->
+                            navController.navigate("form_detail/$formId")
                         }
                     )
                 }
@@ -192,6 +196,19 @@ class MainActivity : ComponentActivity() {
                         key = key,
                         onBack = { navController.popBackStack() }
                     )
+                }
+                
+                composable(
+                    route = "form_detail/{formId}",
+                    arguments = listOf(navArgument("formId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val formId = backStackEntry.arguments?.getString("formId")
+                    if (formId != null) {
+                        FormDetailScreen(
+                            formId = formId,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }

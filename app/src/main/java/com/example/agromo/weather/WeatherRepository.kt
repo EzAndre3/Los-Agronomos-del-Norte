@@ -92,17 +92,19 @@ suspend fun getWeather(latitude: Double, longitude: Double): WeatherInfo? {
     }
 }
 
-// <<< NUEVA FUNCIÓN AÑADIDA AQUÍ >>>
-// Función para obtener el nombre de la ciudad usando el Geocoder de Android
 suspend fun getCityName(context: Context, latitude: Double, longitude: Double): String {
     return try {
         val geocoder = Geocoder(context, Locale.getDefault())
-        // getFromLocation está obsoleto, pero la alternativa requiere API 33.
-        // Esto es más seguro para una mayor compatibilidad.
         @Suppress("DEPRECATION")
-        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+        // CAMBIO: Pedimos hasta 5 resultados para aumentar la probabilidad de encontrar la ciudad.
+        val addresses = geocoder.getFromLocation(latitude, longitude, 5)
         if (addresses != null && addresses.isNotEmpty()) {
-            addresses[0]?.locality ?: "Ubicación desconocida" // 'locality' suele ser la ciudad
+            // Buscamos en todos los resultados el primer 'subAdminArea' que no sea nulo.
+            val city = addresses.firstNotNullOfOrNull { it.subAdminArea }
+
+            // Si encontramos la ciudad, la usamos. Si no, como último recurso,
+            // usamos la 'locality' del primer resultado.
+            city ?: addresses[0]?.locality ?: "Ubicación desconocida"
         } else {
             "Ubicación desconocida"
         }
@@ -154,4 +156,3 @@ private fun weatherCodeToDescription(code: Int): String {
         else -> "Desconocido"
     }
 }
-
