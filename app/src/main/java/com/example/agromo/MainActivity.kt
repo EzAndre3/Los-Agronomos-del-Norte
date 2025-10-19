@@ -28,7 +28,6 @@ import com.example.agromo.dashboard_ui.DashboardScreen
 import com.example.agromo.dashboard_ui.quickvalues.EditValueScreen
 import com.example.agromo.form_detail_ui.FormDetailScreen
 import com.example.agromo.formulario.RegistroFormularioScreen
-import com.example.agromo.login_ui.ForgotPasswordScreen
 import com.example.agromo.login_ui.LoginScreen
 import com.example.agromo.login_ui.RegisterScreen
 import com.example.agromo.login_ui.WelcomeScreen
@@ -157,11 +156,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                composable("forgot_password") {
-                    ForgotPasswordScreen(
-                        onBackToLogin = { navController.popBackStack() }
-                    )
-                }
 
                 composable(
                     route = "dashboard?refreshKey={refreshKey}",

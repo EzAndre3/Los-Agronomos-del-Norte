@@ -22,7 +22,7 @@ fun LoginScreen(
     onNavigateToDashboard: (String, String) -> Unit,
     onNavigateToForgotPassword: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    viewModel: LoginViewModel = viewModel() // 👈 Inyectamos el ViewModel
+    viewModel: LoginViewModel = viewModel()
 ) {
     val defaultGreen = Color(0xFF344E18)
 
@@ -98,18 +98,11 @@ fun LoginScreen(
                 Text("Recuérdame")
             }
 
-            TextButton(
-                onClick = onNavigateToForgotPassword,
-                contentPadding = PaddingValues(0.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = defaultGreen)
-            ) {
-                Text("Olvidé mi contraseña")
-            }
+
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón de login
         PrimaryButton(
             text = "Iniciar Sesión",
             onClick = { viewModel.login() }
