@@ -27,8 +27,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agromo.data.AppDatabase
-import com.example.agromo.data.FormularioEntity
 import com.example.agromo.ui.theme.*
+
+private fun getCropIcon(cropType: String): String {
+    return when (cropType.lowercase()) {
+        "maíz" -> "🌽"
+        "trigo" -> "🌾"
+        "sorgo" -> "🌿"
+        "cebada" -> "🥬"
+        "avena" -> "🥬"
+        "frijol" -> "🫘"
+        "soya" -> "🌱"
+        "Caña de azúcar" -> "🥬"
+        "papa" -> "🥔"
+        "tomate" -> "🍅"
+        else -> "🧑‍🌾"
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,10 +122,11 @@ fun DashboardScreen(
                 }
             } else {
                 items(formularios) { formulario ->
+                    val cropIcon = getCropIcon(formulario.cultivo)
                     ReportCard(
                         date = formulario.cultivo, // Using 'cultivo' for date for now
                         cropType = formulario.cultivo,
-                        cropIcon = "🌶️", // Placeholder icon
+                        cropIcon = cropIcon,
                         title = "Informe de ${formulario.cultivo}",
                         status = "Completo", // Placeholder status
                         statusColor = Primary600Intermediary,
@@ -135,7 +151,7 @@ fun RecentReportsHeader() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Resumen de informes\nrecientes",
+            text = "Resumen de informes recientes",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = ColorBlackWhiteBlack
@@ -437,25 +453,25 @@ fun QuickActionsSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Estado\nfenológico", Icons.Filled.Science, onClick = { onCardClick("Estado fenológico") })
-            QuickActionCard("Plagas y\nenfermedades", Icons.Filled.BugReport, onClick = { onCardClick("Plagas y Enfermedades") })
+            QuickActionCard("Estado fenológico", Icons.Filled.Science, onClick = { onCardClick("Estado fenológico") })
+            QuickActionCard("Plagas y enfermedades", Icons.Filled.BugReport, onClick = { onCardClick("Plagas y Enfermedades") })
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Malezas y\ncompetencia", Icons.Filled.Grass, onClick = { onCardClick("Malezas y Competencia") })
-            QuickActionCard("Humedad\ndel suelo", Icons.Filled.Water, onClick = { onCardClick("Humedad del suelo") })
-            QuickActionCard("PH del\nsuelo", Icons.Filled.Biotech, onClick = { onCardClick("PH del suelo") })
+            QuickActionCard("Malezas y competencia", Icons.Filled.Grass, onClick = { onCardClick("Malezas y Competencia") })
+            QuickActionCard("Humedad del suelo", Icons.Filled.Water, onClick = { onCardClick("Humedad del suelo") })
+            QuickActionCard("PH del suelo", Icons.Filled.Biotech, onClick = { onCardClick("PH del suelo") })
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Altura de\nplantas", Icons.Filled.Height, onClick = { onCardClick("Altura de plantas") })
-            QuickActionCard("Fertilidad\ndel suelo", Icons.Filled.Landscape, onClick = { onCardClick("Fertilidad del suelo") })
+            QuickActionCard("Altura de plantas", Icons.Filled.Height, onClick = { onCardClick("Altura de plantas") })
+            QuickActionCard("Fertilidad del suelo", Icons.Filled.Landscape, onClick = { onCardClick("Fertilidad del suelo") })
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -544,8 +560,8 @@ fun PhotographySection(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(38.dp)
                 ) {
-                    PhotoStepCard("1", "Tomar foto\nde cultivo", Icons.Filled.CameraAlt)
-                    PhotoStepCard("2", "Añádala a\nsu informe", Icons.Filled.Description)
+                    PhotoStepCard("1", "Tomar foto de cultivo", Icons.Filled.CameraAlt)
+                    PhotoStepCard("2", "Añádala a su informe", Icons.Filled.Description)
                 }
 
                 Button(
@@ -667,22 +683,6 @@ fun ReportCard(
                             fontSize = 12.sp,
                             color = ColorBlackWhiteBlack
                         )
-
-                        Row(
-                            modifier = Modifier
-                                .border(1.dp, Primary600Intermediary, RoundedCornerShape(16.dp))
-                                .background(Neutral50, RoundedCornerShape(16.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = cropIcon, fontSize = 8.sp)
-                            Text(
-                                text = cropType,
-                                fontSize = 12.sp,
-                                color = Primary800P
-                            )
-                        }
                     }
 
                     Text(
