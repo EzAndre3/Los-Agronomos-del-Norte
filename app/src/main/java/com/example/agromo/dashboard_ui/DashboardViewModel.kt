@@ -13,10 +13,18 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import android.location.Location
+import com.example.agromo.network.SessionManager
 import kotlinx.coroutines.withContext
+
 
 class DashboardViewModel(application: Application, private val formularioDao: FormularioDao) : AndroidViewModel(application) {
 
+    private val _nombre = MutableStateFlow("")
+    val nombre: StateFlow<String> = _nombre
+
+    private val _username = MutableStateFlow("")
+    val username: StateFlow<String> = _username
+    private val sessionManager = SessionManager(application)
     private val _weatherState = MutableStateFlow(WeatherState())
     val weatherState: StateFlow<WeatherState> = _weatherState.asStateFlow()
 
@@ -26,6 +34,19 @@ class DashboardViewModel(application: Application, private val formularioDao: Fo
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+
+
+    fun reloadUserInfo() {
+        val email = sessionManager.getSavedEmail() ?: ""
+        val nombreLocal = sessionManager.getNombre(email)
+        val usernameLocal = sessionManager.getUsername() ?: ""
+
+        val nombreMostrado = if (nombreLocal.isNullOrBlank()) usernameLocal else nombreLocal
+
+        _nombre.value = nombreMostrado
+        _username.value = usernameLocal
+    }
 
     fun loadWeather() {
         // Lanza toda la operación en un hilo de fondo para no bloquear jamás el hilo principal.
@@ -102,6 +123,7 @@ class DashboardViewModel(application: Application, private val formularioDao: Fo
         }
     }
 }
+
 
 data class WeatherState(
     val locationName: String = "Cargando...",

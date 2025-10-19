@@ -21,6 +21,10 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     var loginMessageColor by mutableStateOf(Color.Red)
     var isLoginSuccessful by mutableStateOf(false)
 
+    var username by mutableStateOf("")
+        private set
+
+
     private val sessionManager = SessionManager(application.applicationContext)
 
     init {
@@ -58,14 +62,18 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
                 if (response.isSuccessful) {
                     val token = response.body()?.token ?: ""
+                    val usernameBackend = response.body()?.user?.username ?: ""
+                    username = usernameBackend
 
                     // Solo guardar sesión completa si "Recuérdame" está activo
                     if (rememberMe) {
                         sessionManager.saveToken(token)
                         sessionManager.saveEmail(email)
                     } else {
-                        sessionManager.clearSession() // borra todo (token y email)
+                        sessionManager.clearSession()
                     }
+                    sessionManager.saveEmail(email)
+                    sessionManager.saveUsername(usernameBackend)
 
                     loginMessage = "Inicio de sesión exitoso"
                     loginMessageColor = Color(0xFF317C42)

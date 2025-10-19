@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -13,10 +14,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agromo.general_components.LogoAgromo
 import com.example.agromo.login_ui.components.PrimaryButton
 import com.example.agromo.login_ui.components.PasswordField
+import com.example.agromo.network.SessionManager
+
 
 @Composable
 fun LoginScreen(
-    onNavigateToDashboard: () -> Unit,
+    onNavigateToDashboard: (String, String) -> Unit,
     onNavigateToForgotPassword: () -> Unit,
     onNavigateToRegister: () -> Unit,
     viewModel: LoginViewModel = viewModel() // 👈 Inyectamos el ViewModel
@@ -31,10 +34,14 @@ fun LoginScreen(
     val loginMessageColor by remember { viewModel::loginMessageColor }
     val isLoginSuccessful by remember { viewModel::isLoginSuccessful }
 
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+
     // Si el login fue exitoso, navegamos
     LaunchedEffect(isLoginSuccessful) {
         if (isLoginSuccessful) {
-            onNavigateToDashboard()
+            val nombreLocal = sessionManager.getNombre(email)
+            onNavigateToDashboard(email, nombreLocal ?: viewModel.username)
         }
     }
 

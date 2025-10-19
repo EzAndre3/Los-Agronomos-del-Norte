@@ -73,11 +73,11 @@ fun openAppPermissionSettings(context: Context) {
 
 /* ---------- Modelo ---------- */
 data class ProfileUiState(
-    val fullName: String = "María González",
+    val fullName: String = "",
     val email: String = "",
     val phone: String = "",
-    val company: String = "AWAQ",
-    val role: String = "CEO"
+    val company: String = "",
+    val role: String = ""
 )
 
 /* ---------- DataStore ---------- */
@@ -102,11 +102,11 @@ private suspend fun saveProfile(context: Context, profile: ProfileUiState) {
 
 private fun readProfile(context: Context) = context.dataStore.data.map { p ->
     ProfileUiState(
-        fullName = p[ProfileKeys.FULL_NAME] ?: "María González",
+        fullName = p[ProfileKeys.FULL_NAME] ?: "",
         email = p[ProfileKeys.EMAIL] ?: "",
         phone = p[ProfileKeys.PHONE] ?: "",
-        company = p[ProfileKeys.COMPANY] ?: "AWAQ",
-        role = p[ProfileKeys.ROLE] ?: "CEO"
+        company = p[ProfileKeys.COMPANY] ?: "",
+        role = p[ProfileKeys.ROLE] ?: ""
     )
 }
 
@@ -131,7 +131,7 @@ fun AgromoHeader() {
 @Composable
 fun ProfileScreen(
     onBack: () -> Unit,
-    onSave: (ProfileUiState) -> Unit,
+    onSave: () -> Unit,
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -140,12 +140,26 @@ fun ProfileScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val uiState = remember { mutableStateOf(ProfileUiState()) }
 
+    // --------- Instancia de SessionManager para nombre local ---------
+    val sessionManager = SessionManager(context)
+    val email = sessionManager.getSavedEmail() ?: ""
+    val username = sessionManager.getUsername() ?: ""
+
     // Estado de permisos
     var hasPermission by remember { mutableStateOf(hasLocationPermission(context)) }
 
-    // Refresca el perfil y permisos al iniciar
-    LaunchedEffect(Unit) {
-        uiState.value = readProfile(context).first()
+    var nombreEditable by remember { mutableStateOf("") }
+    var refreshKey by remember { mutableStateOf(0) }
+
+
+    // --------- REFRESCA EL PERFIL AL INICIAR: lee de DataStore y de SessionManager ---------
+    LaunchedEffect(refreshKey) {
+        val nombreLocal = sessionManager.getNombre(email)
+        nombreEditable = nombreLocal ?: ""
+        uiState.value = uiState.value.copy(
+            fullName = nombreEditable,
+            email = email,
+        )
         hasPermission = hasLocationPermission(context)
     }
 
@@ -199,7 +213,7 @@ fun ProfileScreen(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Avatar
+                    // --------- Avatar: iniciales por nombre local o username ---------
                     Box(
                         modifier = Modifier
                             .size(96.dp)
@@ -208,19 +222,28 @@ fun ProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = initialsOf(uiState.value.fullName),
+                            text = initialsOf(nombreEditable, username),
                             fontSize = 28.sp,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                     }
                     Spacer(Modifier.height(12.dp))
-                    Text(uiState.value.fullName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (nombreEditable.isNotBlank()) nombreEditable else username,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                     Text(uiState.value.role, color = Color.Gray)
                     Text(uiState.value.company, color = Color.Gray)
                     Spacer(Modifier.height(16.dp))
 
                     PersonalForm(
+                        nombreEditable = nombreEditable,
+                        onNombreChange = { nuevoNombre ->
+                            nombreEditable = nuevoNombre
+                            uiState.value = uiState.value.copy(fullName = nuevoNombre)
+                        },
                         state = uiState.value,
                         onChange = { uiState.value = it }
                     )
@@ -263,12 +286,15 @@ fun ProfileScreen(
                     ) {
                         Button(
                             onClick = {
-                                val current = uiState.value
                                 scope.launch {
+                                    val nuevoNombre = nombreEditable
+                                    val current = uiState.value.copy(fullName = nuevoNombre)
                                     saveProfile(context, current)
+                                    sessionManager.saveNombre(email, nuevoNombre)
+                                    uiState.value = current
+                                    onSave()
+                                    onBack()
                                 }
-                                onSave(current)
-                                onBack()
                             },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
@@ -291,7 +317,6 @@ fun ProfileScreen(
                     }
                     OutlinedButton(
                         onClick = {
-                            val sessionManager = SessionManager(context)
                             scope.launch(Dispatchers.IO) {
                                 sessionManager.clearSession()
                                 snackbarHostState.showSnackbar("Sesión cerrada correctamente")
@@ -309,18 +334,29 @@ fun ProfileScreen(
 
 /* ---------- Subvistas ---------- */
 @Composable
-private fun PersonalForm(state: ProfileUiState, onChange: (ProfileUiState) -> Unit) {
+private fun PersonalForm(
+    nombreEditable: String,
+    onNombreChange: (String) -> Unit,
+    state: ProfileUiState,
+    onChange: (ProfileUiState) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        LabeledField("Nombre Completo", state.fullName) { onChange(state.copy(fullName = it)) }
-        LabeledField("Correo Electrónico", state.email) { onChange(state.copy(email = it)) }
-        LabeledField("Teléfono", state.phone) { onChange(state.copy(phone = it)) }
-        LabeledField("Empresa", state.company) { onChange(state.copy(company = it)) }
-        LabeledField("Cargo", state.role) { onChange(state.copy(role = it)) }
+        LabeledField(
+            label = "Nombre Completo",
+            value = nombreEditable,
+            onValue = onNombreChange,
+            readOnly = false
+        )
+        LabeledField("Correo Electrónico", state.email, {}, readOnly = true)
+        LabeledField("Teléfono", state.phone, { onChange(state.copy(phone = it)) }, readOnly = false)
+        LabeledField("Empresa", state.company, { onChange(state.copy(company = it)) }, readOnly = false)
+        LabeledField("Cargo", state.role, { onChange(state.copy(role = it)) }, readOnly = false)
+
     }
 }
 
 @Composable
-private fun LabeledField(label: String, value: String, onValue: (String) -> Unit) {
+private fun LabeledField(label: String, value: String, onValue: (String) -> Unit, readOnly: Boolean = false) {
     Column {
         Text(label, fontSize = 13.sp, color = Color.Gray)
         OutlinedTextField(
@@ -328,14 +364,20 @@ private fun LabeledField(label: String, value: String, onValue: (String) -> Unit
             onValueChange = onValue,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
-            singleLine = true
+            singleLine = true,
+            enabled = !readOnly
         )
     }
 }
 
-
-// Obtiene iniciales para el avatar circular.
-private fun initialsOf(name: String): String =
-    name.trim().split(" ").filter { it.isNotBlank() }.take(2)
-        .joinToString("") { it.first().uppercase() }
-        .ifBlank { "MG" }
+/* ---------- Utilidad para iniciales del avatar circular ---------- */
+private fun initialsOf(name: String, username: String): String {
+    val parts = name.trim().split(" ").filter { it.isNotBlank() }
+    return if (parts.size >= 2) {
+        parts.take(2).joinToString("") { it.first().uppercase() }
+    } else if (parts.size == 1) {
+        parts.first().first().uppercase().toString()
+    } else {
+        username.firstOrNull()?.uppercase()?.toString() ?: "?"
+    }
+}

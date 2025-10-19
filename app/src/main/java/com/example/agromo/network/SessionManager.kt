@@ -24,6 +24,24 @@ class SessionManager(context: Context) {
     }
 
     fun clearSession() {
-        prefs.edit().clear().apply()
+        prefs.edit()
+            .remove("token")
+            .remove("email")
+            .remove("username")
+            .apply()
+    }
+    fun saveNombre(email: String, nombre: String) {
+        prefs.edit().putString("nombre_$email", nombre).apply()
+    }
+
+    fun getNombre(email: String): String? {
+        return prefs.getString("nombre_$email", null)
+    }
+
+    fun saveUsername(username: String) {
+        prefs.edit().putString("username", username).apply()
+    }
+    fun getUsername(): String? {
+        return prefs.getString("username", null)
     }
 }

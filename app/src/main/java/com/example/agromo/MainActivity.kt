@@ -1,6 +1,7 @@
 package com.example.agromo
 
 import android.Manifest
+import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -36,6 +38,11 @@ import com.example.agromo.ui.theme.AgromoTheme
 import com.example.agromo.network.SessionManager
 import kotlinx.coroutines.launch
 import androidx.core.view.WindowCompat
+import com.example.agromo.dashboard_ui.DashboardViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.agromo.dashboard_ui.DashboardViewModelFactory
+import com.example.agromo.data.AppDatabase
+
 
 class MainActivity : ComponentActivity() {
 
@@ -86,8 +93,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
     @Composable
     fun AppContent() {
+        val context = LocalContext.current
+        val db = AppDatabase.getDatabase(context)
+        val formularioDao = db.formularioDao()
+        val dashboardViewModel: DashboardViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+            factory = DashboardViewModelFactory(
+                context.applicationContext as Application,
+                formularioDao
+            )
+        )
         val navController = rememberNavController()
         var startDestination by remember { mutableStateOf<String?>(null) }
 
@@ -116,14 +133,22 @@ class MainActivity : ComponentActivity() {
                     LoginScreen(
                         onNavigateToRegister = { navController.navigate("register") },
                         onNavigateToForgotPassword = { navController.navigate("forgot_password") },
-                        onNavigateToDashboard = {
+                        onNavigateToDashboard = { email, posibleNombre ->
+                            val sessionManager = SessionManager(applicationContext)
+                            val nombreDePerfil = posibleNombre.ifBlank { "" }
+                            if (nombreDePerfil.isNotBlank()) {
+                                sessionManager.saveNombre(email, nombreDePerfil)
+                            }
+                            dashboardViewModel.reloadUserInfo()
                             navController.navigate("dashboard") {
                                 popUpTo("welcome") { inclusive = true }
                                 launchSingleTop = true
                             }
                         }
+
                     )
                 }
+
 
                 composable("register") {
                     RegisterScreen(
@@ -138,8 +163,14 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                composable("dashboard") {
-                    DashboardScreen(
+                composable(
+                    route = "dashboard?refreshKey={refreshKey}",
+                    arguments = listOf(navArgument("refreshKey") { defaultValue = "init"; type = NavType.StringType })
+                ) { navBackStackEntry ->
+                    val refreshKey = navBackStackEntry.arguments?.getString("refreshKey") ?: ""
+                    DashboardScreen(refreshKey = refreshKey,
+
+
                         onNavigateToAiChat = { navController.navigate("aichat") },
                         onNavigateToFormulario = { navController.navigate("formulario") },
                         onNavigateToProfile = { navController.navigate("profile") },
@@ -162,12 +193,12 @@ class MainActivity : ComponentActivity() {
                 composable("profile") {
                     ProfileScreen(
                         onBack = {
-                            navController.navigate("dashboard") {
+                            navController.navigate("dashboard?refreshKey=${System.currentTimeMillis()}") {
                                 popUpTo("dashboard") { inclusive = true }
                                 launchSingleTop = true
                             }
                         },
-                        onSave = { /* guardar cambios */ },
+                        onSave = {  dashboardViewModel.reloadUserInfo() },
                         onLogout = {
                             val sessionManager = SessionManager(applicationContext)
                             lifecycleScope.launch {

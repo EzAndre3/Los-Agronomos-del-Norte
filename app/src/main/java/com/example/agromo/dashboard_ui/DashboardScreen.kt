@@ -17,6 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agromo.data.AppDatabase
+import com.example.agromo.data.FormularioEntity
+import com.example.agromo.network.SessionManager
 import com.example.agromo.ui.theme.*
 
 private fun getCropIcon(cropType: String): String {
@@ -48,6 +52,7 @@ private fun getCropIcon(cropType: String): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
+    refreshKey: String,
     onNavigateToProfile: () -> Unit,
     onNavigateToAiChat: () -> Unit,
     onNavigateToFormulario: () -> Unit,
@@ -57,12 +62,24 @@ fun DashboardScreen(
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val formularioDao = db.formularioDao()
+// ViewModel con Factory, igual que ya tienes:
     val viewModel: DashboardViewModel = viewModel(factory = DashboardViewModelFactory(context.applicationContext as Application, formularioDao))
+
+// Cambia a observar los valores del ViewModel:
+    val nombre by viewModel.nombre.collectAsState()
+    val username by viewModel.username.collectAsState()
+
+    val saludo = "¡Buenos días!"
+    val presentacion = if (!nombre.isNullOrBlank()) nombre else username
+    val avatarText = initialsOf(nombre, username)
 
     val weatherState by viewModel.weatherState.collectAsState()
     val formularios by viewModel.formularios.collectAsState()
 
-    LaunchedEffect(Unit) {
+
+
+    LaunchedEffect(refreshKey) {
+        viewModel.reloadUserInfo()
         viewModel.loadWeather()
     }
 
@@ -71,7 +88,13 @@ fun DashboardScreen(
             .fillMaxSize()
             .background(Primary50)
     ) {
-        TopBarSection(onAvatarClick = onNavigateToProfile)
+        // Pasa las variables al TopBarSection
+        TopBarSection(
+            onAvatarClick = onNavigateToProfile,
+            saludo = saludo,
+            presentacion = presentacion,
+            avatarText = avatarText
+        )
 
         LazyColumn(
             modifier = Modifier
@@ -178,7 +201,12 @@ fun RecentReportsHeader() {
 }
 
 @Composable
-fun TopBarSection(onAvatarClick: () -> Unit) {
+fun TopBarSection(
+    onAvatarClick: () -> Unit,
+    saludo: String,
+    presentacion: String,
+    avatarText: String
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,23 +227,23 @@ fun TopBarSection(onAvatarClick: () -> Unit) {
                         .background(Neutral500),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Person,
-                        contentDescription = "Avatar",
-                        tint = ColorBlackWhiteWhite,
-                        modifier = Modifier.size(24.dp)
+                    Text(
+                        text = avatarText,
+                        fontSize = 20.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
 
             Column {
                 Text(
-                    text = "¡Buenos días!",
+                    text = saludo,
                     fontSize = 14.sp,
                     color = ColorBlackWhiteBlack
                 )
                 Text(
-                    text = "María Pia",
+                    text = presentacion,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = ColorBlackWhiteBlack
@@ -715,5 +743,15 @@ fun ReportCard(
                 modifier = Modifier.size(24.dp)
             )
         }
+    }
+}
+private fun initialsOf(nombre: String?, username: String): String {
+    val parts = nombre?.trim()?.split(" ")?.filter { it.isNotBlank() } ?: emptyList()
+    return if (parts.size >= 2) {
+        parts.take(2).joinToString("") { it.first().uppercase() }
+    } else if (parts.size == 1) {
+        parts.first().first().uppercase().toString()
+    } else {
+        username.firstOrNull()?.uppercase()?.toString() ?: "?"
     }
 }

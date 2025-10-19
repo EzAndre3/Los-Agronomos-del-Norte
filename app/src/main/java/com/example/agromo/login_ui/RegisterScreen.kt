@@ -6,12 +6,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.agromo.login_ui.components.PrimaryButton
 import com.example.agromo.login_ui.components.PasswordField
 import com.example.agromo.login_ui.components.TextFieldOutlined
+import com.example.agromo.network.SessionManager
 
 @Composable
 fun RegisterScreen(
@@ -24,14 +26,18 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
 
     val customGreen = Color(0xFF317C42)
 
 
     LaunchedEffect(viewModel.isRegisterSuccessful) {
         if (viewModel.isRegisterSuccessful) {
-            // Navegar al Onboarding / WelcomeScreen
-            navController.navigate("onboarding") {
+            val sessionManager = SessionManager(context)
+            sessionManager.saveNombre(email, fullName)
+
+            navController.navigate("login") {     // Navegar a la siguiente pagina
                 popUpTo("register") { inclusive = true }
             }
         }
