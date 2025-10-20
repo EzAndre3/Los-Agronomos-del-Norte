@@ -10,10 +10,6 @@ class RegistroFormularioViewModel(private val repository: FormularioRepository) 
     private val _formulario = mutableStateOf(FormularioEntity())
     val formulario: State<FormularioEntity> = _formulario
 
-    fun updateUbicacion(value: String) {
-        _formulario.value = _formulario.value.copy(ubicacion = value)
-    }
-
     fun updateCultivo(value: String) {
         _formulario.value = _formulario.value.copy(cultivo = value)
     }
@@ -66,5 +62,9 @@ class RegistroFormularioViewModel(private val repository: FormularioRepository) 
 
     fun guardarFormulario(): FormularioEntity {
         return _formulario.value
+    }
+
+    fun updateImagen(uri: String) {
+        _formulario.value = _formulario.value.copy(imagenUri = uri)
     }
 }

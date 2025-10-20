@@ -158,17 +158,14 @@ fun PictureScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    val dynamicHeight = remember(imageAspectRatio) {
-                        if (imageAspectRatio > 1f) 220.dp else 380.dp
-                    }
 
                     Image(
                         painter = rememberAsyncImagePainter(imageUri),
                         contentDescription = "Preview Foto",
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.FillWidth,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(dynamicHeight)
+                            .aspectRatio(imageAspectRatio)
                             .clip(RoundedCornerShape(16.dp))
                     )
 

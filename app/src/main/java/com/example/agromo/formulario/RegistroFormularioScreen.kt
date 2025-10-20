@@ -1,6 +1,13 @@
 package com.example.agromo.formulario
 
+import android.content.ContentValues
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,7 +21,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
@@ -22,6 +31,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.agromo.data.*
 import kotlinx.coroutines.launch
 
@@ -111,13 +121,13 @@ fun RegistroFormularioScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (step) {
-                0 -> StepUbicacion(viewModel)
-                1 -> StepVariedad(viewModel)
-                2 -> StepHumedad(viewModel)
-                3 -> SteppH(viewModel)
-                4 -> StepAltura(viewModel)
-                5 -> StepFenologico(viewModel)
-                6 -> StepFollaje(viewModel)
+                0 -> StepVariedad(viewModel)
+                1 -> StepHumedad(viewModel)
+                2 -> SteppH(viewModel)
+                3 -> StepAltura(viewModel)
+                4 -> StepFenologico(viewModel)
+                5 -> StepFollaje(viewModel)
+                6 -> StepImagen(viewModel) // nuevo paso final
             }
 
             Spacer(modifier = Modifier.height(120.dp))
@@ -144,62 +154,6 @@ fun StepIndicator(current: Int, total: Int) {
                     )
             )
         }
-    }
-}
-
-@Composable
-fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
-    var ubicacion by remember { mutableStateOf(TextFieldValue("")) }
-    var usarActual by remember { mutableStateOf(false) }
-
-    Column {
-        Text("Registro del Cultivo", fontSize = 20.sp, color = Color(0xFF1B1B1B))
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Complete los datos que disponga; el resto puede omitirse.",
-            color = Color.Gray,
-            fontSize = 14.sp
-        )
-        Spacer(Modifier.height(20.dp))
-
-        Text("Indique la ubicación de su cultivo", fontSize = 16.sp, color = Color(0xFF1B1B1B))
-        Spacer(Modifier.height(16.dp))
-
-        OutlinedButton(
-            onClick = {
-                usarActual = !usarActual
-                if (usarActual) {
-                    // Simulación: aquí puedes luego integrar un servicio real de ubicación
-                    val ubicacionActual = "Ubicación actual detectada"
-                    ubicacion = TextFieldValue(ubicacionActual)
-                    viewModel.updateUbicacion(ubicacionActual)
-                } else {
-                    ubicacion = TextFieldValue("")
-                    viewModel.updateUbicacion("")
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF33691E))
-        ) {
-            Text(if (usarActual) "Usando ubicación actual" else "Usar mi ubicación actual")
-        }
-
-        Spacer(Modifier.height(8.dp))
-        Text("O complete manualmente", color = Color.Gray)
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = ubicacion,
-            onValueChange = {
-                ubicacion = it
-                viewModel.updateUbicacion(it.text) //
-            },
-            label = { Text("Busca por ciudad o localidad") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
-        )
     }
 }
 
@@ -860,3 +814,142 @@ fun StepFollaje(viewModel: RegistroFormularioViewModel) {
         }
     }
 }
+
+/* ---------------------------- NUEVO: Paso de Imagen ---------------------------- */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StepImagen(viewModel: RegistroFormularioViewModel) {
+    val context = LocalContext.current
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var imageAspectRatio by remember { mutableFloatStateOf(1f) }
+
+    val mainGreen = Color(0xFF317C42)
+    val lightBackground = Color(0xFFF7FBEF)
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri = uri
+        uri?.let {
+            context.contentResolver.openInputStream(it)?.use { input ->
+                val bmp = BitmapFactory.decodeStream(input)
+                imageAspectRatio = bmp.width.toFloat() / bmp.height.toFloat()
+            }
+        }
+    }
+
+    val photoUriState = remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            imageUri = photoUriState.value
+            photoUriState.value?.let {
+                context.contentResolver.openInputStream(it)?.use { input ->
+                    val bmp = BitmapFactory.decodeStream(input)
+                    imageAspectRatio = bmp.width.toFloat() / bmp.height.toFloat()
+                }
+            }
+        }
+    }
+
+    fun createGalleryUri(): Uri? {
+        val resolver = context.contentResolver
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "Agromo_${System.currentTimeMillis()}.jpg")
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/Agromo")
+        }
+        return resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(lightBackground)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        if (imageUri == null) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            ) {
+                Button(
+                    onClick = {
+                        val newUri = createGalleryUri()
+                        photoUriState.value = newUri
+                        newUri?.let { cameraLauncher.launch(it) }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = mainGreen)
+                ) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = "Tomar Foto", tint = Color.White)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Tomar Foto", fontSize = 16.sp, color = Color.White)
+                }
+
+                Button(
+                    onClick = { galleryLauncher.launch("image/*") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = mainGreen)
+                ) {
+                    Icon(Icons.Default.Image, contentDescription = "Seleccionar", tint = Color.White)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Seleccionar desde Galería", fontSize = 16.sp, color = Color.White)
+                }
+            }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            ) {
+
+                Image(
+                    painter = rememberAsyncImagePainter(imageUri),
+                    contentDescription = "Preview Foto",
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(imageAspectRatio)
+                        .clip(RoundedCornerShape(16.dp))
+                )
+
+                Button(
+                    onClick = { imageUri = null },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Reintentar",
+                        tint = Color.White,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("Reintentar", color = Color.White, fontSize = 15.sp)
+                }
+            }
+        }
+    }
+}
+
+fun uploadImageToApi(imageUri: Uri) {
+    // Placeholder - Aquí puedes implementar la subida HTTPS si lo deseas
+}
+

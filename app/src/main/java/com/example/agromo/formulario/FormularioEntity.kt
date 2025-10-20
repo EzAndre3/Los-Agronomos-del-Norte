@@ -12,20 +12,16 @@ val fechaActual: String
 val horaActual: String
     get() = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
 
-
 @Entity(tableName = "formulario")
 data class FormularioEntity(
     @PrimaryKey val id: String = "FORM-" + System.currentTimeMillis(),
 
-    val ubicacion: String = "",
     val cultivo: String = "",
     val fechaSiembra: String = "",
-
 
     val humedadTierra: String = "",
     val ph: String = "",
     val metodoPH: String = "",
-
 
     val alturaPlanta: String = "",
     val metodoAltura: String = "",
@@ -41,11 +37,10 @@ data class FormularioEntity(
     val colorFollaje: String = "",
     val estadoFollaje: String = "",
 
+    val imagenUri: String = "",
 
     val observaciones: String = "",
     val fechaRegistro: String = fechaActual,
     val horaRegistro: String = horaActual,
     val estadoConexion: Boolean = true
-
-
 )
