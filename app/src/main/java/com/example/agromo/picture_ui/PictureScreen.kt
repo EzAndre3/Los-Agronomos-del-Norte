@@ -123,7 +123,7 @@ fun PictureScreen(
                             .fillMaxWidth()
                             .height(55.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = mainGreen)
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33691E))
                     ) {
                         Icon(
                             imageVector = Icons.Default.CameraAlt,
@@ -140,7 +140,7 @@ fun PictureScreen(
                             .fillMaxWidth()
                             .height(55.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = mainGreen)
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33691E))
                     ) {
                         Icon(
                             imageVector = Icons.Default.ImageIcon,
@@ -199,7 +199,7 @@ fun PictureScreen(
                                 .weight(1f)
                                 .height(55.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = mainGreen)
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33691E))
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Check,

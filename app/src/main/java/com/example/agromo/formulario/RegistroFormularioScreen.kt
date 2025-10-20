@@ -889,7 +889,7 @@ fun StepImagen(viewModel: RegistroFormularioViewModel) {
                         .fillMaxWidth()
                         .height(55.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = mainGreen)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33691E))
                 ) {
                     Icon(Icons.Default.CameraAlt, contentDescription = "Tomar Foto", tint = Color.White)
                     Spacer(Modifier.width(8.dp))
@@ -902,7 +902,7 @@ fun StepImagen(viewModel: RegistroFormularioViewModel) {
                         .fillMaxWidth()
                         .height(55.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = mainGreen)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33691E))
                 ) {
                     Icon(Icons.Default.Image, contentDescription = "Seleccionar", tint = Color.White)
                     Spacer(Modifier.width(8.dp))
