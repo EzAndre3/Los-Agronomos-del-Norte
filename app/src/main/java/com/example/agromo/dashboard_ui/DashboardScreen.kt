@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -582,18 +583,19 @@ fun PhotographySection(
         ) {
             Column(
                 modifier = Modifier.padding(22.dp, 32.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally // ✅ centramos todo el contenido
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(38.dp)
+                    horizontalArrangement = Arrangement.Center
                 ) {
+                    // ✅ mantenemos la estructura, pero comentamos el número
                     PhotoStepCard("1", "Tomar foto de cultivo", Icons.Filled.CameraAlt)
-                    PhotoStepCard("2", "Añádala a su informe", Icons.Filled.Description)
                 }
 
                 Button(
-                    onClick = {onStartAiChat() },
+                    onClick = { onStartAiChat() },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary900Dark),
                     shape = RoundedCornerShape(16.dp)
@@ -611,7 +613,7 @@ fun PhotographySection(
 }
 
 @Composable
-fun PhotoStepCard(number: String, title: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+fun PhotoStepCard(number: String, title: String, icon: ImageVector) {
     Column(
         modifier = Modifier.width(113.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -623,6 +625,8 @@ fun PhotoStepCard(number: String, title: String, icon: androidx.compose.ui.graph
                 .background(Primary100, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
+            // 🔽 🔽 🔽 COMENTADO: bloque del número
+            /*
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -638,6 +642,8 @@ fun PhotoStepCard(number: String, title: String, icon: androidx.compose.ui.graph
                     color = ColorBlackWhiteWhite
                 )
             }
+            */
+            // 🔼 🔼 🔼 FIN DEL BLOQUE COMENTADO
 
             Icon(
                 imageVector = icon,
@@ -657,6 +663,7 @@ fun PhotoStepCard(number: String, title: String, icon: androidx.compose.ui.graph
         )
     }
 }
+
 
 @Composable
 fun ReportCard(
