@@ -472,7 +472,7 @@ fun QuickActionsSection(
                 color = ColorBlackWhiteBlack
             )
             Text(
-                text = "Registre diagnósticos de plagas, malezas y otros datos en el momento.",
+                text = "Registre diagnósticos y otros datos clave en el momento.",
                 fontSize = 14.sp,
                 color = Neutral700
             )
@@ -483,14 +483,14 @@ fun QuickActionsSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             QuickActionCard("Estado fenológico", Icons.Filled.Science, onClick = { onCardClick("Estado fenológico") })
-            QuickActionCard("Plagas y enfermedades", Icons.Filled.BugReport, onClick = { onCardClick("Plagas y Enfermedades") })
+            QuickActionCard("Densidad de follaje", Icons.Filled.DensityMedium, onClick = { onCardClick("Densidad de follaje") })
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("Malezas y competencia", Icons.Filled.Grass, onClick = { onCardClick("Malezas y Competencia") })
+            QuickActionCard("Color predominante", Icons.Filled.Palette, onClick = { onCardClick("Color predominante") })
             QuickActionCard("Humedad del suelo", Icons.Filled.Water, onClick = { onCardClick("Humedad del suelo") })
             QuickActionCard("PH del suelo", Icons.Filled.Biotech, onClick = { onCardClick("PH del suelo") })
         }
@@ -500,7 +500,7 @@ fun QuickActionsSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             QuickActionCard("Altura de plantas", Icons.Filled.Height, onClick = { onCardClick("Altura de plantas") })
-            QuickActionCard("Fertilidad del suelo", Icons.Filled.Landscape, onClick = { onCardClick("Fertilidad del suelo") })
+            QuickActionCard("Estado General de Follaje", Icons.Filled.Eco, onClick = { onCardClick("Estado General de Follaje") })
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -509,7 +509,7 @@ fun QuickActionsSection(
 @Composable
 fun RowScope.QuickActionCard(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     isAdd: Boolean = false,
     onClick: () -> Unit
     ) {

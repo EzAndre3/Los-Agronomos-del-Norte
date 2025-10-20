@@ -1,6 +1,8 @@
+
 package com.example.agromo.formulario
 
 import android.content.ContentValues
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
@@ -291,8 +293,18 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
 
 @Composable
 fun StepHumedad(viewModel: RegistroFormularioViewModel) {
-    var humedad by remember { mutableStateOf(TextFieldValue("")) }
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("quickactions", Context.MODE_PRIVATE) }
+    val initialHumedad = remember { sharedPreferences.getString("Humedad del suelo", "") ?: "" }
+
+    var humedad by remember { mutableStateOf(TextFieldValue(initialHumedad)) }
     var errorHumedad by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialHumedad) {
+        if (initialHumedad.isNotEmpty()) {
+            viewModel.updateHumedad(initialHumedad)
+        }
+    }
 
     Column {
         Text("Suelo y condiciones", fontSize = 20.sp, color = Color(0xFF1B1B1B))
@@ -342,8 +354,18 @@ fun StepHumedad(viewModel: RegistroFormularioViewModel) {
 
 @Composable
 fun SteppH(viewModel: RegistroFormularioViewModel) {
-    var ph by remember { mutableStateOf(TextFieldValue("")) }
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("quickactions", Context.MODE_PRIVATE) }
+    val initialPh = remember { sharedPreferences.getString("PH del suelo", "") ?: "" }
+
+    var ph by remember { mutableStateOf(TextFieldValue(initialPh)) }
     var selectedMedidor by remember { mutableStateOf<String?>(null) } // Guarda el tipo de medidor
+
+    LaunchedEffect(initialPh) {
+        if (initialPh.isNotEmpty()) {
+            viewModel.updatePH(initialPh, selectedMedidor ?: "")
+        }
+    }
 
     Column {
         Text("Nivel del pH", fontSize = 20.sp, color = Color(0xFF1B1B1B))
@@ -404,8 +426,18 @@ fun SteppH(viewModel: RegistroFormularioViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepFertilidad(viewModel: RegistroFormularioViewModel) {
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("quickactions", Context.MODE_PRIVATE) }
+    val initialFertilidad = remember { sharedPreferences.getString("Fertilidad del suelo", "Nivel de fertilidad") ?: "Nivel de fertilidad" }
+
     var nivelFertilidadExpanded by remember { mutableStateOf(false) }
-    var nivelFertilidad by remember { mutableStateOf("Nivel de fertilidad") }
+    var nivelFertilidad by remember { mutableStateOf(initialFertilidad) }
+
+    LaunchedEffect(initialFertilidad) {
+        if (initialFertilidad != "Nivel de fertilidad") {
+            viewModel.updateFertilidadManual(initialFertilidad)
+        }
+    }
 
     var nitrogeno by remember { mutableStateOf("") }
     var fosforo by remember { mutableStateOf("") }
@@ -528,9 +560,19 @@ fun StepFertilidad(viewModel: RegistroFormularioViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepAltura(viewModel: RegistroFormularioViewModel) {
-    var altura by remember { mutableStateOf(TextFieldValue("")) }
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("quickactions", Context.MODE_PRIVATE) }
+    val initialAltura = remember { sharedPreferences.getString("Altura de plantas", "") ?: "" }
+
+    var altura by remember { mutableStateOf(TextFieldValue(initialAltura)) }
     var metodo by remember { mutableStateOf("Seleccione un método") }
     var expandedMetodo by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialAltura) {
+        if (initialAltura.isNotEmpty()) {
+            viewModel.updateAltura(initialAltura, metodo)
+        }
+    }
 
     val metodos = listOf(
         "Regla / Cinta Métrica",
@@ -609,9 +651,19 @@ fun StepAltura(viewModel: RegistroFormularioViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepFenologico(viewModel: RegistroFormularioViewModel) {
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("quickactions", Context.MODE_PRIVATE) }
+    val initialEstado = remember { sharedPreferences.getString("Estado fenológico", "Seleccione estado") ?: "Seleccione estado" }
+
     var expanded by remember { mutableStateOf(false) }
-    var estado by remember { mutableStateOf("Seleccione estado") }
+    var estado by remember { mutableStateOf(initialEstado) }
     var observaciones by remember { mutableStateOf("") }
+
+    LaunchedEffect(initialEstado) {
+        if (initialEstado != "Seleccione estado") {
+            viewModel.updateFenologico(initialEstado, observaciones)
+        }
+    }
 
     Column {
         Text("Estado fenológico de la planta", fontSize = 20.sp, color = Color(0xFF1B1B1B))
@@ -682,9 +734,16 @@ fun StepFenologico(viewModel: RegistroFormularioViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepFollaje(viewModel: RegistroFormularioViewModel) {
-    var densidad by remember { mutableStateOf("Seleccione una opción") }
-    var color by remember { mutableStateOf("Seleccione una opción") }
-    var estado by remember { mutableStateOf("Seleccione una opción") }
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("quickactions", Context.MODE_PRIVATE) }
+    val densFollaje = remember { sharedPreferences.getString("Densidad de follaje", "Seleccione estado") ?: "Seleccione estado" }
+    val colFollaje = remember { sharedPreferences.getString("Color predominante", "Seleccione estado") ?: "Seleccione estado" }
+    val estFollaje = remember { sharedPreferences.getString("Estado General de Follaje", "Seleccione estado") ?: "Seleccione estado" }
+
+
+    var densidad by remember { mutableStateOf(densFollaje) }
+    var color by remember { mutableStateOf(colFollaje) }
+    var estado by remember { mutableStateOf(estFollaje) }
 
     var expandedDensidad by remember { mutableStateOf(false) }
     var expandedColor by remember { mutableStateOf(false) }
@@ -952,4 +1011,3 @@ fun StepImagen(viewModel: RegistroFormularioViewModel) {
 fun uploadImageToApi(imageUri: Uri) {
     // Placeholder - Aquí puedes implementar la subida HTTPS si lo deseas
 }
-

@@ -2,11 +2,11 @@ package com.example.agromo.dashboard_ui.quickvalues
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +26,14 @@ fun EditValueScreen(
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("quickactions", Context.MODE_PRIVATE)
     var value by remember { mutableStateOf(prefs.getString(key, "") ?: "") }
+
+    val options: List<String>? = when (key) {
+        "Densidad de follaje" -> listOf("Mucha", "Media", "Poca")
+        "Color predominante" -> listOf("Verde oscuro - sano", "Amarillo - débil", "Marrón - seco")
+        "Estado General de Follaje" -> listOf("Uniformes", "Irregulares")
+        "Estado fenológico" -> listOf("Germinación", "Floración", "Maduración", "Cosecha")
+        else -> null
+    }
 
     Box(
         modifier = Modifier
@@ -51,12 +59,22 @@ fun EditValueScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(22.dp))
-                TextFieldOutlined(
-                    value = value,
-                    onValueChange = { value = it },
-                    label = key,
-                    placeholder = "Nuevo valor"
-                )
+
+                if (options != null) {
+                    // Initialize value with the first option if it's empty
+                    if (value.isEmpty() && options.isNotEmpty()) {
+                        value = options.first()
+                    }
+                    RadioGroup(options = options, selectedOption = value, onOptionSelected = { value = it })
+                } else {
+                    TextFieldOutlined(
+                        value = value,
+                        onValueChange = { value = it },
+                        label = key,
+                        placeholder = "Nuevo valor"
+                    )
+                }
+
                 Spacer(Modifier.height(18.dp))
                 PrimaryButton(
                     text = "Guardar"
@@ -69,3 +87,31 @@ fun EditValueScreen(
     }
 }
 
+@Composable
+fun RadioGroup(
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit
+) {
+    Column {
+        options.forEach { option ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = (option == selectedOption),
+                        onClick = { onOptionSelected(option) }
+                    )
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = (option == selectedOption),
+                    onClick = { onOptionSelected(option) }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = option)
+            }
+        }
+    }
+}
