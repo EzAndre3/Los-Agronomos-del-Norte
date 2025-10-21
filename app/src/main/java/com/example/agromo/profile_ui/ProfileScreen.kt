@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -25,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -350,7 +352,18 @@ private fun PersonalForm(
             readOnly = false
         )
         LabeledField("Correo Electrónico", state.email, {}, readOnly = true)
-        LabeledField("Teléfono", state.phone, { onChange(state.copy(phone = it)) }, readOnly = false)
+        LabeledField(
+            label = "Teléfono",
+            value = state.phone,
+            onValue = { input ->
+                // Solo permitir números
+                if (input.all { it.isDigit() }) {
+                    onChange(state.copy(phone = input))
+                }
+            },
+            readOnly = false,
+            keyboardType = KeyboardType.Number
+        )
         LabeledField("Empresa", state.company, { onChange(state.copy(company = it)) }, readOnly = false)
         LabeledField("Cargo", state.role, { onChange(state.copy(role = it)) }, readOnly = false)
 
@@ -358,7 +371,11 @@ private fun PersonalForm(
 }
 
 @Composable
-private fun LabeledField(label: String, value: String, onValue: (String) -> Unit, readOnly: Boolean = false) {
+private fun LabeledField(label: String,
+                         value: String,
+                         onValue: (String) -> Unit,
+                         readOnly: Boolean = false,
+                         keyboardType: KeyboardType = KeyboardType.Text) {
     Column {
         Text(label, fontSize = 13.sp, color = Color.Gray)
         OutlinedTextField(
@@ -367,7 +384,8 @@ private fun LabeledField(label: String, value: String, onValue: (String) -> Unit
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
-            enabled = !readOnly
+            enabled = !readOnly,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
         )
     }
 }
