@@ -95,7 +95,7 @@ fun DashboardScreen(
             saludo = saludo,
             presentacion = presentacion,
             avatarText = avatarText,
-            onSyncClick = { viewModel.startSync(context) }
+            onSyncClick = { viewModel.startSync(context, formularioDao) }
         )
 
         LazyColumn(

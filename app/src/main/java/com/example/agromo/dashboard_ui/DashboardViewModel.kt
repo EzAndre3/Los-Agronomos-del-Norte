@@ -14,6 +14,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import android.location.Location
+import android.util.Log
 import com.example.agromo.network.SessionManager
 import com.example.agromo.network.SyncRepository
 import kotlinx.coroutines.withContext
@@ -37,12 +38,16 @@ class DashboardViewModel(application: Application, private val formularioDao: Fo
             initialValue = emptyList()
         )
 
-    fun startSync(context: Context) {
+    fun startSync(context: Context, formularioDao: FormularioDao) {
         viewModelScope.launch {
-            val formulariosList = formularios.value
-            SyncRepository.syncFormularios(context, formulariosList)
+            try {
+                SyncRepository.syncPendingFormularios(context, formularioDao)
+            } catch (e: Exception) {
+                Log.e("SYNC", "Error al iniciar la sincronización", e)
+            }
         }
     }
+
 
     fun reloadUserInfo() {
         val email = sessionManager.getSavedEmail() ?: ""

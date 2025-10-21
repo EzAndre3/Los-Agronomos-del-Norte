@@ -17,6 +17,12 @@ interface FormularioDao {
     @Query("SELECT * FROM formulario WHERE id = :id")
     suspend fun getFormularioById(id: String): FormularioEntity?
 
+    @Query("SELECT * FROM formulario WHERE estado = 1")
+    suspend fun getPendingFormularios(): List<FormularioEntity>
+
+    @Query("UPDATE formulario SET estado = 0 WHERE id = :formId")
+    suspend fun markFormularioAsSynced(formId: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFormulario(formulario: FormularioEntity)
 
