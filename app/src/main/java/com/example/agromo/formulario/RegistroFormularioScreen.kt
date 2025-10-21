@@ -5,6 +5,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.location.Geocoder
 import android.net.Uri
@@ -24,6 +25,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.agromo.data.*
@@ -178,12 +182,49 @@ fun StepLocalizacion(viewModel: RegistroFormularioViewModel) {
     var localizacion by remember { mutableStateOf(TextFieldValue("")) }
     var usarActual by remember { mutableStateOf(false) }
 
-    // Permiso de ubicación
-    var tienePermiso by remember { mutableStateOf(false) }
+    // Función para obtener la ubicación y actualizar el estado.
+    val obtenerUbicacion = {
+        coroutineScope.launch {
+            try {
+                // La supresión de lint es segura aquí porque solo llamamos a esta función
+                // después de verificar y obtener el permiso.
+                val location = fusedLocationClient.lastLocation.await()
+                if (location != null) {
+                    val city = getCityName(context, location.latitude, location.longitude)
+                    val texto = "$city (${location.latitude.format(4)}, ${location.longitude.format(4)})"
+                    localizacion = TextFieldValue(texto)
+                    viewModel.updateLocalizacion(texto)
+                    usarActual = true // Marcar que estamos usando la ubicación actual
+                } else {
+                    localizacion = TextFieldValue("Ubicación no disponible")
+                    viewModel.updateLocalizacion("Ubicación no disponible")
+                }
+            } catch (e: Exception) {
+                Log.e("GPS", "Error obteniendo ubicación", e)
+                localizacion = TextFieldValue("Error al obtener ubicación")
+                viewModel.updateLocalizacion("Error al obtener ubicación")
+            }
+        }
+    }
+
+    // Comprobamos si ya tenemos el permiso al iniciar.
+    var tienePermiso by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    // Launcher para solicitar el permiso.
     val permissionLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             tienePermiso = granted
-            if (!granted) {
+            if (granted) {
+                // ¡Permiso concedido! Obtenemos la ubicación inmediatamente.
+                obtenerUbicacion()
+            } else {
                 localizacion = TextFieldValue("Permiso de ubicación denegado")
                 viewModel.updateLocalizacion("Permiso de ubicación denegado")
             }
@@ -204,37 +245,19 @@ fun StepLocalizacion(viewModel: RegistroFormularioViewModel) {
 
         OutlinedButton(
             onClick = {
-                if (!tienePermiso) {
-                    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                if (usarActual) {
+                    // Si ya se está usando, la desactivamos.
+                    localizacion = TextFieldValue("")
+                    viewModel.updateLocalizacion("")
+                    usarActual = false
                 } else {
-                    usarActual = !usarActual
-                    if (usarActual) {
-                        coroutineScope.launch {
-                            try {
-                                val location = fusedLocationClient.lastLocation.await()
-                                if (location != null) {
-                                    val city = getCityName(
-                                        context,
-                                        location.latitude,
-                                        location.longitude
-                                    )
-                                    val texto =
-                                        "$city (${location.latitude.format(4)}, ${location.longitude.format(4)})"
-                                    localizacion = TextFieldValue(texto)
-                                    viewModel.updateLocalizacion(texto)
-                                } else {
-                                    localizacion = TextFieldValue("Ubicación no disponible")
-                                    viewModel.updateLocalizacion("Ubicación no disponible")
-                                }
-                            } catch (e: Exception) {
-                                Log.e("GPS", "Error obteniendo ubicación", e)
-                                localizacion = TextFieldValue("Error al obtener ubicación")
-                                viewModel.updateLocalizacion("Error al obtener ubicación")
-                            }
-                        }
+                    // Si no se está usando, la activamos.
+                    if (tienePermiso) {
+                        // Si ya tenemos permiso, obtenemos la ubicación.
+                        obtenerUbicacion()
                     } else {
-                        localizacion = TextFieldValue("")
-                        viewModel.updateLocalizacion("")
+                        // Si no, solicitamos el permiso. El launcher se encargará del resto.
+                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                     }
                 }
             },
@@ -254,11 +277,15 @@ fun StepLocalizacion(viewModel: RegistroFormularioViewModel) {
             onValueChange = {
                 localizacion = it
                 viewModel.updateLocalizacion(it.text)
+                // Si el usuario escribe manualmente, ya no estamos "usando" la ubicación automática.
+                if (usarActual) usarActual = false
             },
             label = { Text("Busca por ciudad o localidad") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
+            // Deshabilitamos la edición manual si se está usando la ubicación actual.
+            readOnly = usarActual
         )
     }
 }
@@ -802,6 +829,12 @@ fun StepFollaje(viewModel: RegistroFormularioViewModel) {
     val opcionesColor = listOf("Verde oscuro - sano", "Amarillo - débil", "Marrón - seco")
     val opcionesEstado = listOf("Uniformes", "Irregulares")
 
+    LaunchedEffect(densFollaje, colFollaje, estFollaje) {
+        if (densFollaje != "Seleccione estado" || colFollaje != "Seleccione estado" || estFollaje != "Seleccione estado") {
+            viewModel.updateFollaje(densFollaje, colFollaje, estFollaje)
+        }
+    }
+
     Column {
         Text("Densidad del follaje", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(8.dp))
@@ -826,7 +859,9 @@ fun StepFollaje(viewModel: RegistroFormularioViewModel) {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDensidad) }
             )
@@ -863,7 +898,9 @@ fun StepFollaje(viewModel: RegistroFormularioViewModel) {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedColor) }
             )
@@ -900,7 +937,9 @@ fun StepFollaje(viewModel: RegistroFormularioViewModel) {
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Seleccione una opción") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEstado) }
             )

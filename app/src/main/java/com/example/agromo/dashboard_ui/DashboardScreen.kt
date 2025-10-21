@@ -185,18 +185,6 @@ fun RecentReportsHeader() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = "Ver todos",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Primary800P
-            )
-            Icon(
-                imageVector = Icons.Filled.ChevronRight,
-                contentDescription = "Ver todos",
-                tint = Primary800P,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }
@@ -625,25 +613,6 @@ fun PhotoStepCard(number: String, title: String, icon: ImageVector) {
                 .background(Primary100, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
-            // 🔽 🔽 🔽 COMENTADO: bloque del número
-            /*
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(10.dp, 8.dp)
-                    .size(32.dp)
-                    .background(Primary800P, RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = number,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ColorBlackWhiteWhite
-                )
-            }
-            */
-            // 🔼 🔼 🔼 FIN DEL BLOQUE COMENTADO
 
             Icon(
                 imageVector = icon,
