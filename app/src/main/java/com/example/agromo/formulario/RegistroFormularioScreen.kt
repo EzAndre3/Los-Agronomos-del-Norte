@@ -46,6 +46,8 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.io.File
+import java.io.FileOutputStream
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -973,11 +975,33 @@ fun StepImagen(viewModel: RegistroFormularioViewModel) {
     val mainGreen = Color(0xFF317C42)
     val lightBackground = Color(0xFFF7FBEF)
 
+    // ✅ Función para copiar la imagen seleccionada al almacenamiento interno
+    fun copyImageToInternalStorage(uri: Uri): String? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val fileName = "Agromo_${System.currentTimeMillis()}.jpg"
+            val tempFile = File(context.cacheDir, fileName)
+            FileOutputStream(tempFile).use { output ->
+                inputStream?.copyTo(output)
+            }
+            inputStream?.close()
+            tempFile.absolutePath // ✅ devuelve la ruta física del archivo
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    // ✅ Selección desde galería
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         imageUri = uri
         uri?.let {
+            val realPath = copyImageToInternalStorage(it)
+            if (realPath != null) {
+                viewModel.updateImagen(realPath) // ✅ Guarda la ruta física en lugar del content://
+            }
             context.contentResolver.openInputStream(it)?.use { input ->
                 val bmp = BitmapFactory.decodeStream(input)
                 imageAspectRatio = bmp.width.toFloat() / bmp.height.toFloat()
@@ -985,6 +1009,7 @@ fun StepImagen(viewModel: RegistroFormularioViewModel) {
         }
     }
 
+    // ✅ Captura desde cámara
     val photoUriState = remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
@@ -992,6 +1017,10 @@ fun StepImagen(viewModel: RegistroFormularioViewModel) {
         if (success) {
             imageUri = photoUriState.value
             photoUriState.value?.let {
+                val realPath = copyImageToInternalStorage(it)
+                if (realPath != null) {
+                    viewModel.updateImagen(realPath) // ✅ Guarda directamente la ruta del archivo físico
+                }
                 context.contentResolver.openInputStream(it)?.use { input ->
                     val bmp = BitmapFactory.decodeStream(input)
                     imageAspectRatio = bmp.width.toFloat() / bmp.height.toFloat()
@@ -1064,15 +1093,14 @@ fun StepImagen(viewModel: RegistroFormularioViewModel) {
                     .fillMaxWidth()
                     .fillMaxHeight()
             ) {
-
                 Image(
                     painter = rememberAsyncImagePainter(imageUri),
                     contentDescription = "Preview Foto",
-                    contentScale = ContentScale.FillWidth,
+                    contentScale = ContentScale.Fit, // ✅ Se ajusta al espacio sin deformar
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(imageAspectRatio)
                         .clip(RoundedCornerShape(16.dp))
+                        .heightIn(min = 200.dp, max = 600.dp) // ✅ Se adapta dinámicamente al alto
                 )
 
                 Button(
@@ -1094,8 +1122,4 @@ fun StepImagen(viewModel: RegistroFormularioViewModel) {
             }
         }
     }
-}
-
-fun uploadImageToApi(imageUri: Uri) {
-    // Placeholder - Aquí puedes implementar la subida HTTPS si lo deseas
 }
