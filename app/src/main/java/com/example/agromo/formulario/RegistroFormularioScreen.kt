@@ -1,9 +1,12 @@
 
 package com.example.agromo.formulario
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.location.Geocoder
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
@@ -35,7 +38,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.agromo.data.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -160,12 +167,29 @@ fun StepIndicator(current: Int, total: Int) {
     }
 }
 
+@SuppressLint("MissingPermission")
 @Composable
 fun StepLocalizacion(viewModel: RegistroFormularioViewModel) {
+    val context = LocalContext.current
+    val fusedLocationClient: FusedLocationProviderClient =
+        remember { LocationServices.getFusedLocationProviderClient(context) }
+    val coroutineScope = rememberCoroutineScope()
+
     var localizacion by remember { mutableStateOf(TextFieldValue("")) }
     var usarActual by remember { mutableStateOf(false) }
 
-    Column {
+    // Permiso de ubicación
+    var tienePermiso by remember { mutableStateOf(false) }
+    val permissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            tienePermiso = granted
+            if (!granted) {
+                localizacion = TextFieldValue("Permiso de ubicación denegado")
+                viewModel.updateLocalizacion("Permiso de ubicación denegado")
+            }
+        }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text("Registro del Cultivo", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(4.dp))
         Text(
@@ -180,41 +204,79 @@ fun StepLocalizacion(viewModel: RegistroFormularioViewModel) {
 
         OutlinedButton(
             onClick = {
-                usarActual = !usarActual
-                if (usarActual) {
-                    // Simulación: aquí puedes luego integrar un servicio real de ubicación
-                    val localizacionActual = "Localizacion actual detectada"
-                    localizacion = TextFieldValue(localizacionActual)
-                    viewModel.updateLocalizacion(localizacionActual)
+                if (!tienePermiso) {
+                    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                 } else {
-                    localizacion = TextFieldValue("")
-                    viewModel.updateLocalizacion("")
+                    usarActual = !usarActual
+                    if (usarActual) {
+                        coroutineScope.launch {
+                            try {
+                                val location = fusedLocationClient.lastLocation.await()
+                                if (location != null) {
+                                    val city = getCityName(
+                                        context,
+                                        location.latitude,
+                                        location.longitude
+                                    )
+                                    val texto =
+                                        "$city (${location.latitude.format(4)}, ${location.longitude.format(4)})"
+                                    localizacion = TextFieldValue(texto)
+                                    viewModel.updateLocalizacion(texto)
+                                } else {
+                                    localizacion = TextFieldValue("Ubicación no disponible")
+                                    viewModel.updateLocalizacion("Ubicación no disponible")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("GPS", "Error obteniendo ubicación", e)
+                                localizacion = TextFieldValue("Error al obtener ubicación")
+                                viewModel.updateLocalizacion("Error al obtener ubicación")
+                            }
+                        }
+                    } else {
+                        localizacion = TextFieldValue("")
+                        viewModel.updateLocalizacion("")
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
+            shape = MaterialTheme.shapes.medium,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF33691E))
         ) {
             Text(if (usarActual) "Usando ubicación actual" else "Usar mi ubicación actual")
         }
 
         Spacer(Modifier.height(8.dp))
-        Text("O complete manualmente", color = Color.Gray)
+        Text("O completa manualmente", color = Color.Gray)
         Spacer(Modifier.height(8.dp))
 
         OutlinedTextField(
             value = localizacion,
             onValueChange = {
                 localizacion = it
-                viewModel.updateLocalizacion(it.text) //
+                viewModel.updateLocalizacion(it.text)
             },
             label = { Text("Busca por ciudad o localidad") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
+            shape = MaterialTheme.shapes.medium
         )
     }
 }
+
+// 📍 Convierte coordenadas en nombre de ciudad
+fun getCityName(context: Context, latitude: Double, longitude: Double): String {
+    return try {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+        addresses?.firstOrNull()?.locality ?: "Ubicación desconocida"
+    } catch (e: Exception) {
+        Log.e("Geocoder", "Error: ${e.message}")
+        "Ubicación desconocida"
+    }
+}
+
+// Redondea coordenadas a n decimales
+fun Double.format(digits: Int) = "%.${digits}f".format(this)
 
 
 @Composable

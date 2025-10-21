@@ -253,8 +253,8 @@ fun TopBarSection(
         }
 
         Icon(
-            imageVector = Icons.Filled.MoreVert,
-            contentDescription = "Menu",
+            imageVector = Icons.Default.Sync,
+            contentDescription = "Sincronizar",
             tint = ColorBlackWhiteBlack,
             modifier = Modifier.size(24.dp)
         )
