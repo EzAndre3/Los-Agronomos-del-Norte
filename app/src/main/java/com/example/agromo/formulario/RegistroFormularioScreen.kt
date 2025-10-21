@@ -126,7 +126,7 @@ fun RegistroFormularioScreen(
                 0 -> StepLocalizacion(viewModel)
                 1 -> StepVariedad(viewModel)
                 2 -> StepHumedad(viewModel)
-                3 -> SteppH(viewModel)
+                3 -> StepPH(viewModel)
                 4 -> StepAltura(viewModel)
                 5 -> StepFenologico(viewModel)
                 6 -> StepFollaje(viewModel)
@@ -239,9 +239,56 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
             shape = RoundedCornerShape(12.dp)
         ) {
             Box(Modifier.padding(16.dp)) {
-                Text("Selecciona uno o varios cultivos de la lista, o búscalos manualmente.")
+                Text("Anota la fecha de la siembra y selecciona uno o varios cultivos de la lista.")
             }
         }
+
+        Spacer(Modifier.height(20.dp))
+        Text("Fecha de la siembra", fontSize = 16.sp)
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = fecha_siembra,
+            onValueChange = { input ->
+                // Filtrar solo números
+                val digits = input.text.filter { it.isDigit() }.take(8)
+
+                // Aplicar formato dd/mm/aaaa
+                val formatted = when (digits.length) {
+                    in 1..2 -> digits
+                    in 3..4 -> "${digits.take(2)}/${digits.drop(2)}"
+                    in 5..8 -> "${digits.take(2)}/${digits.drop(2).take(2)}/${digits.drop(4)}"
+                    else -> digits
+                }
+
+                // Validar fecha
+                val partes = formatted.split("/")
+                errorFecha = if (partes.size == 3 && partes[2].length == 4) {
+                    val dia = partes[0].toIntOrNull() ?: 0
+                    val mes = partes[1].toIntOrNull() ?: 0
+                    dia !in 1..31 || mes !in 1..12
+                } else false
+
+                fecha_siembra = TextFieldValue(
+                    text = formatted,
+                    selection = TextRange(formatted.length)
+                )
+
+
+                if (!errorFecha) {
+                    viewModel.updateFechaSiembra(formatted)
+                }
+            },
+            label = { Text("Fecha de la siembra (dd/mm/aaaa)") },
+            isError = errorFecha,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            supportingText = {
+                if (errorFecha)
+                    Text("Fecha inválida", color = Color.Red, fontSize = 12.sp)
+            }
+        )
 
         Spacer(Modifier.height(20.dp))
         Text("Variedad Cultivada", fontSize = 16.sp)
@@ -300,52 +347,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
             }
         }
 
-        Spacer(Modifier.height(20.dp))
-        Text("Fecha de la siembra", fontSize = 16.sp)
-        Spacer(Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = fecha_siembra,
-            onValueChange = { input ->
-                // Filtrar solo números
-                val digits = input.text.filter { it.isDigit() }.take(8)
-
-                // Aplicar formato dd/mm/aaaa
-                val formatted = when (digits.length) {
-                    in 1..2 -> digits
-                    in 3..4 -> "${digits.take(2)}/${digits.drop(2)}"
-                    in 5..8 -> "${digits.take(2)}/${digits.drop(2).take(2)}/${digits.drop(4)}"
-                    else -> digits
-                }
-
-                // Validar fecha
-                val partes = formatted.split("/")
-                errorFecha = if (partes.size == 3 && partes[2].length == 4) {
-                    val dia = partes[0].toIntOrNull() ?: 0
-                    val mes = partes[1].toIntOrNull() ?: 0
-                    dia !in 1..31 || mes !in 1..12
-                } else false
-
-                fecha_siembra = TextFieldValue(
-                    text = formatted,
-                    selection = TextRange(formatted.length)
-                )
-
-
-                if (!errorFecha) {
-                    viewModel.updateFechaSiembra(formatted)
-                }
-            },
-            label = { Text("Fecha de la siembra (dd/mm/aaaa)") },
-            isError = errorFecha,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            supportingText = {
-                if (errorFecha)
-                    Text("Fecha inválida", color = Color.Red, fontSize = 12.sp)
-            }
-        )
     }
 }
 
@@ -411,7 +413,7 @@ fun StepHumedad(viewModel: RegistroFormularioViewModel) {
 
 
 @Composable
-fun SteppH(viewModel: RegistroFormularioViewModel) {
+fun StepPH(viewModel: RegistroFormularioViewModel) {
     val context = LocalContext.current
     val sharedPreferences = remember { context.getSharedPreferences("quickactions", Context.MODE_PRIVATE) }
     val initialPh = remember { sharedPreferences.getString("PH del suelo", "") ?: "" }
