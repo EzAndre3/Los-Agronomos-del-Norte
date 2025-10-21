@@ -155,7 +155,7 @@ fun DashboardScreen(
                         title = "Informe de ${formulario.cultivo}",
                         status = "Completo", // Placeholder status
                         statusColor = Primary600Intermediary,
-                        onClick = { onNavigateToFormDetail(formulario.id) }
+                        onClick = { onNavigateToFormDetail(formulario.id.toString()) }
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }

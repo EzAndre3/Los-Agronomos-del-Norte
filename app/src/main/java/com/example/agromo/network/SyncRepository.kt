@@ -12,7 +12,8 @@ import java.io.File
 
 object SyncRepository {
 
-    private const val API_URL = "https://ekgcss8ww8o4ok480g08soo4.91.98.193.75.sslip.io/api/agromo/forms/1/submission"
+    private const val API_URL =
+        "https://ekgcss8ww8o4ok480g08soo4.91.98.193.75.sslip.io/api/agromo/forms/1/submission"
 
     // ✅ obtiene el token real guardado en SessionManager
     private fun getAuthHeader(context: Context): String {
@@ -25,14 +26,18 @@ object SyncRepository {
 
     private val client = OkHttpClient()
 
-    // dentro de object SyncRepository
+    // ✅ Sincroniza todos los formularios pendientes
     suspend fun syncPendingFormularios(context: Context, formularioDao: FormularioDao) {
         withContext(Dispatchers.IO) {
             val pendientes = formularioDao.getPendingFormularios()
 
             if (pendientes.isEmpty()) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "No hay formularios pendientes por sincronizar", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "No hay formularios pendientes por sincronizar",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 return@withContext
             }
@@ -43,25 +48,24 @@ object SyncRepository {
             }
 
             for (form in pendientes) {
-                val imageFile = File(form.imagenUri)
-                if (!imageFile.exists()) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Imagen no encontrada para ${form.id}", Toast.LENGTH_SHORT).show()
-                    }
-                    continue
-                }
-
                 try {
-                    val requestBody = MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart(
+                    val imageFile = File(form.imagenUri)
+
+                    // ✅ Si la imagen existe, la agregamos. Si no, simplemente omitimos el campo.
+                    val requestBodyBuilder = MultipartBody.Builder().setType(MultipartBody.FORM)
+
+                    if (imageFile.exists()) {
+                        requestBodyBuilder.addFormDataPart(
                             "image",
                             imageFile.name,
                             imageFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
                         )
-                        .addFormDataPart(
-                            "metadata",
-                            """
+                    }
+
+                    // ✅ Agregar los demás datos como metadata
+                    requestBodyBuilder.addFormDataPart(
+                        "metadata",
+                        """
                         {
                             "cultivo": "${form.cultivo}",
                             "fecha_siembra": "${form.fecha_siembra}",
@@ -79,8 +83,9 @@ object SyncRepository {
                             "localizacion": "${form.localizacion}"
                         }
                         """.trimIndent()
-                        )
-                        .build()
+                    )
+
+                    val requestBody = requestBodyBuilder.build()
 
                     val request = Request.Builder()
                         .url(API_URL)
@@ -91,27 +96,38 @@ object SyncRepository {
 
                     val response = client.newCall(request).execute()
 
-                    // ✅ Validar response ANTES de cambiar estado
+                    // ✅ Validar response ANTES de marcar como sincronizado
                     if (response.isSuccessful) {
                         formularioDao.markFormularioAsSynced(form.id)
 
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Sincronización Formulario ${form.id} completada", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Sincronización Formulario ${form.id} completada",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     } else {
-                        // ❌ Si la API responde error → detener todo
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Hubo error al sincronizar Formulario ${form.id}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Error al sincronizar Formulario ${form.id}",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
-                        break // 🔥 detiene el proceso aquí
+                        break // 🔥 detiene el proceso aquí si hubo error del servidor
                     }
 
                 } catch (e: Exception) {
-                    // ❌ Error de conexión o sin respuesta del servidor
+                    // ❌ Error de red o fallo inesperado
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Hubo error al sincronizar Formulario ${form.id}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "Hubo error al sincronizar Formulario ${form.id}: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                    break // 🔥 detener el proceso completo
+                    break // 🔥 detiene el proceso completo
                 }
             }
         }
