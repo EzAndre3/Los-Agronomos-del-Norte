@@ -123,7 +123,7 @@ fun RegistroFormularioScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (step) {
-                0 -> StepUbicacion(viewModel)
+                0 -> StepLocalizacion(viewModel)
                 1 -> StepVariedad(viewModel)
                 2 -> StepHumedad(viewModel)
                 3 -> SteppH(viewModel)
@@ -161,8 +161,8 @@ fun StepIndicator(current: Int, total: Int) {
 }
 
 @Composable
-fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
-    var ubicacion by remember { mutableStateOf(TextFieldValue("")) }
+fun StepLocalizacion(viewModel: RegistroFormularioViewModel) {
+    var localizacion by remember { mutableStateOf(TextFieldValue("")) }
     var usarActual by remember { mutableStateOf(false) }
 
     Column {
@@ -183,12 +183,12 @@ fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
                 usarActual = !usarActual
                 if (usarActual) {
                     // Simulación: aquí puedes luego integrar un servicio real de ubicación
-                    val ubicacionActual = "Ubicación actual detectada"
-                    ubicacion = TextFieldValue(ubicacionActual)
-                    viewModel.updateUbicacion(ubicacionActual)
+                    val localizacionActual = "Localizacion actual detectada"
+                    localizacion = TextFieldValue(localizacionActual)
+                    viewModel.updateLocalizacion(localizacionActual)
                 } else {
-                    ubicacion = TextFieldValue("")
-                    viewModel.updateUbicacion("")
+                    localizacion = TextFieldValue("")
+                    viewModel.updateLocalizacion("")
                 }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -203,10 +203,10 @@ fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
         Spacer(Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = ubicacion,
+            value = localizacion,
             onValueChange = {
-                ubicacion = it
-                viewModel.updateUbicacion(it.text) //
+                localizacion = it
+                viewModel.updateLocalizacion(it.text) //
             },
             label = { Text("Busca por ciudad o localidad") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
