@@ -27,12 +27,6 @@ data class FormularioEntity(
     val alturaPlanta: String = "",
     val metodoAltura: String = "",
     val estadoFenologico: String = "",
-    val nivelFertilidadManual: String = "",
-    val nitrogeno: String = "",
-    val fosforo: String = "",
-    val potasio: String = "",
-    val materiaOrganica: String = "",
-    val cic: String = "",
 
     val densidadFollaje: String = "",
     val colorFollaje: String = "",

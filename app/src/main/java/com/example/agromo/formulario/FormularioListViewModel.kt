@@ -49,21 +49,6 @@ class RegistroFormularioViewModel(private val repository: FormularioRepository) 
         )
     }
 
-    fun updateFertilidadManual(nivel: String) {
-        _formulario.value = _formulario.value.copy(nivelFertilidadManual = nivel)
-    }
-
-    fun updateNutriente(tipo: String, valor: String) {
-        _formulario.value = when (tipo) {
-            "N" -> _formulario.value.copy(nitrogeno = valor)
-            "P" -> _formulario.value.copy(fosforo = valor)
-            "K" -> _formulario.value.copy(potasio = valor)
-            "MO" -> _formulario.value.copy(materiaOrganica = valor)
-            "CIC" -> _formulario.value.copy(cic = valor)
-            else -> _formulario.value
-        }
-    }
-
     fun guardarFormulario(): FormularioEntity {
         return _formulario.value
     }

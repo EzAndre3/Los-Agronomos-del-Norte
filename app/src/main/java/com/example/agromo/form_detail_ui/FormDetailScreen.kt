@@ -36,7 +36,6 @@ fun FormDetailScreen(
     var humedadTierra by remember { mutableStateOf("") }
     var ph by remember { mutableStateOf("") }
     var alturaPlanta by remember { mutableStateOf("") }
-    var nivelFertilidadManual by remember { mutableStateOf("") }
 
     // Update local states when formState is loaded
     LaunchedEffect(formState) {
@@ -48,7 +47,6 @@ fun FormDetailScreen(
             humedadTierra = it.humedadTierra
             ph = it.ph
             alturaPlanta = it.alturaPlanta
-            nivelFertilidadManual = it.nivelFertilidadManual
         }
     }
 
@@ -88,8 +86,6 @@ fun FormDetailScreen(
                 OutlinedTextField(value = ph, onValueChange = { ph = it }, label = { Text("PH del Suelo") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = alturaPlanta, onValueChange = { alturaPlanta = it }, label = { Text("Altura de Plantas") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = nivelFertilidadManual, onValueChange = { nivelFertilidadManual = it }, label = { Text("Fertilidad del Suelo") }, modifier = Modifier.fillMaxWidth())
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -103,8 +99,7 @@ fun FormDetailScreen(
                                 estadoFenologico = estadoFenologico,
                                 humedadTierra = humedadTierra,
                                 ph = ph,
-                                alturaPlanta = alturaPlanta,
-                                nivelFertilidadManual = nivelFertilidadManual
+                                alturaPlanta = alturaPlanta
                             )
                             viewModel.updateForm(updatedForm)
                             onBack()
