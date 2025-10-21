@@ -83,30 +83,30 @@ data class ProfileUiState(
 /* ---------- DataStore ---------- */
 private val Context.dataStore by preferencesDataStore("profile_prefs")
 private object ProfileKeys {
-    val FULL_NAME = stringPreferencesKey("full_name")
-    val EMAIL = stringPreferencesKey("email")
-    val PHONE = stringPreferencesKey("phone")
-    val COMPANY = stringPreferencesKey("company")
-    val ROLE = stringPreferencesKey("role")
+    fun fullName(email: String) = stringPreferencesKey("full_name_$email")
+    fun emailKey(email: String) = stringPreferencesKey("email_$email")
+    fun phone(email: String) = stringPreferencesKey("phone_$email")
+    fun company(email: String) = stringPreferencesKey("company_$email")
+    fun role(email: String) = stringPreferencesKey("role_$email")
 }
 
-private suspend fun saveProfile(context: Context, profile: ProfileUiState) {
+private suspend fun saveProfile(context: Context, email: String, profile: ProfileUiState) {
     context.dataStore.edit { p ->
-        p[ProfileKeys.FULL_NAME] = profile.fullName
-        p[ProfileKeys.EMAIL] = profile.email
-        p[ProfileKeys.PHONE] = profile.phone
-        p[ProfileKeys.COMPANY] = profile.company
-        p[ProfileKeys.ROLE] = profile.role
+        p[ProfileKeys.fullName(email)] = profile.fullName
+        p[ProfileKeys.emailKey(email)] = profile.email
+        p[ProfileKeys.phone(email)] = profile.phone
+        p[ProfileKeys.company(email)] = profile.company
+        p[ProfileKeys.role(email)] = profile.role
     }
 }
 
-private fun readProfile(context: Context) = context.dataStore.data.map { p ->
+private fun readProfile(context: Context, email: String) = context.dataStore.data.map { p ->
     ProfileUiState(
-        fullName = p[ProfileKeys.FULL_NAME] ?: "",
-        email = p[ProfileKeys.EMAIL] ?: "",
-        phone = p[ProfileKeys.PHONE] ?: "",
-        company = p[ProfileKeys.COMPANY] ?: "",
-        role = p[ProfileKeys.ROLE] ?: ""
+        fullName = p[ProfileKeys.fullName(email)] ?: "",
+        email = p[ProfileKeys.emailKey(email)] ?: "",
+        phone = p[ProfileKeys.phone(email)] ?: "",
+        company = p[ProfileKeys.company(email)] ?: "",
+        role = p[ProfileKeys.role(email)] ?: ""
     )
 }
 
@@ -145,6 +145,7 @@ fun ProfileScreen(
     val email = sessionManager.getSavedEmail() ?: ""
     val username = sessionManager.getUsername() ?: ""
 
+
     // Estado de permisos
     var hasPermission by remember { mutableStateOf(hasLocationPermission(context)) }
 
@@ -154,9 +155,10 @@ fun ProfileScreen(
 
     // --------- REFRESCA EL PERFIL AL INICIAR: lee de DataStore y de SessionManager ---------
     LaunchedEffect(refreshKey) {
+        val profileGuardado = readProfile(context, email).first()
         val nombreLocal = sessionManager.getNombre(email)
         nombreEditable = nombreLocal ?: ""
-        uiState.value = uiState.value.copy(
+        uiState.value = profileGuardado.copy(
             fullName = nombreEditable,
             email = email,
         )
@@ -288,8 +290,8 @@ fun ProfileScreen(
                             onClick = {
                                 scope.launch {
                                     val nuevoNombre = nombreEditable
-                                    val current = uiState.value.copy(fullName = nuevoNombre)
-                                    saveProfile(context, current)
+                                    val current = uiState.value.copy(fullName = nuevoNombre,)
+                                    saveProfile(context, email = email, profile = current)
                                     sessionManager.saveNombre(email, nuevoNombre)
                                     uiState.value = current
                                     onSave()
