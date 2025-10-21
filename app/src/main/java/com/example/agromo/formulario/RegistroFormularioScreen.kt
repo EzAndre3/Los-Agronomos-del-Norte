@@ -54,7 +54,7 @@ fun RegistroFormularioScreen(
         factory = RegistroFormularioViewModelFactory(repository)
     )
 
-    val totalSteps = 7
+    val totalSteps = 8
     var step by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -123,13 +123,14 @@ fun RegistroFormularioScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (step) {
-                0 -> StepVariedad(viewModel)
-                1 -> StepHumedad(viewModel)
-                2 -> SteppH(viewModel)
-                3 -> StepAltura(viewModel)
-                4 -> StepFenologico(viewModel)
-                5 -> StepFollaje(viewModel)
-                6 -> StepImagen(viewModel) // nuevo paso final
+                0 -> StepUbicacion(viewModel)
+                1 -> StepVariedad(viewModel)
+                2 -> StepHumedad(viewModel)
+                3 -> SteppH(viewModel)
+                4 -> StepAltura(viewModel)
+                5 -> StepFenologico(viewModel)
+                6 -> StepFollaje(viewModel)
+                7 -> StepImagen(viewModel) // nuevo paso final
             }
 
             Spacer(modifier = Modifier.height(120.dp))
@@ -158,6 +159,63 @@ fun StepIndicator(current: Int, total: Int) {
         }
     }
 }
+
+@Composable
+fun StepUbicacion(viewModel: RegistroFormularioViewModel) {
+    var ubicacion by remember { mutableStateOf(TextFieldValue("")) }
+    var usarActual by remember { mutableStateOf(false) }
+
+    Column {
+        Text("Registro del Cultivo", fontSize = 20.sp, color = Color(0xFF1B1B1B))
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Complete los datos que disponga; el resto puede omitirse.",
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
+        Spacer(Modifier.height(20.dp))
+
+        Text("Indique la ubicación de su cultivo", fontSize = 16.sp, color = Color(0xFF1B1B1B))
+        Spacer(Modifier.height(16.dp))
+
+        OutlinedButton(
+            onClick = {
+                usarActual = !usarActual
+                if (usarActual) {
+                    // Simulación: aquí puedes luego integrar un servicio real de ubicación
+                    val ubicacionActual = "Ubicación actual detectada"
+                    ubicacion = TextFieldValue(ubicacionActual)
+                    viewModel.updateUbicacion(ubicacionActual)
+                } else {
+                    ubicacion = TextFieldValue("")
+                    viewModel.updateUbicacion("")
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF33691E))
+        ) {
+            Text(if (usarActual) "Usando ubicación actual" else "Usar mi ubicación actual")
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Text("O complete manualmente", color = Color.Gray)
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = ubicacion,
+            onValueChange = {
+                ubicacion = it
+                viewModel.updateUbicacion(it.text) //
+            },
+            label = { Text("Busca por ciudad o localidad") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp)
+        )
+    }
+}
+
 
 @Composable
 fun StepVariedad(viewModel: RegistroFormularioViewModel) {

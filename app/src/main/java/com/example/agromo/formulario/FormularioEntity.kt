@@ -16,6 +16,7 @@ val horaActual: String
 data class FormularioEntity(
     @PrimaryKey val id: String = "FORM-" + System.currentTimeMillis(),
 
+    val ubicacion: String = "",
     val cultivo: String = "",
     val fechaSiembra: String = "",
 
