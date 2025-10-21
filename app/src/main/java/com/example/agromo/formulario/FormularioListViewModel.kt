@@ -19,33 +19,33 @@ class RegistroFormularioViewModel(private val repository: FormularioRepository) 
     }
 
     fun updateFechaSiembra(value: String) {
-        _formulario.value = _formulario.value.copy(fechaSiembra = value)
+        _formulario.value = _formulario.value.copy(fecha_siembra = value)
     }
 
     fun updateHumedad(value: String) {
-        _formulario.value = _formulario.value.copy(humedadTierra = value)
+        _formulario.value = _formulario.value.copy(humedad = value)
     }
 
     fun updatePH(value: String, metodo: String) {
-        _formulario.value = _formulario.value.copy(ph = value, metodoPH = metodo)
+        _formulario.value = _formulario.value.copy(ph = value, metodo_ph = metodo)
     }
 
     fun updateAltura(value: String, metodo: String) {
-        _formulario.value = _formulario.value.copy(alturaPlanta = value, metodoAltura = metodo)
+        _formulario.value = _formulario.value.copy(altura_planta = value, metodo_altura = metodo)
     }
 
     fun updateFenologico(estado: String, observaciones: String) {
         _formulario.value = _formulario.value.copy(
-            estadoFenologico = estado,
+            estado_fenologico = estado,
             observaciones = observaciones
         )
     }
 
     fun updateFollaje(densidad: String, color: String, estado: String) {
         _formulario.value = _formulario.value.copy(
-            densidadFollaje = densidad,
-            colorFollaje = color,
-            estadoFollaje = estado
+            densidad_follaje = densidad,
+            color_follaje = color,
+            estado_follaje = estado
         )
     }
 

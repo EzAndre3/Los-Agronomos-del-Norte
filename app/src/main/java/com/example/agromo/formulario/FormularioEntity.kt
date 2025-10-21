@@ -17,25 +17,29 @@ data class FormularioEntity(
     @PrimaryKey val id: String = "FORM-" + System.currentTimeMillis(),
 
     val cultivo: String = "",
-    val fechaSiembra: String = "",
+    val fecha_siembra: String = "",
 
-    val humedadTierra: String = "",
+    val humedad: String = "",
+    val metodo_humedad: String = "",
+
     val ph: String = "",
-    val metodoPH: String = "",
+    val metodo_ph: String = "",
 
-    val alturaPlanta: String = "",
-    val metodoAltura: String = "",
-    val estadoFenologico: String = "",
+    val altura_planta: String = "",
+    val metodo_altura: String = "",
+    val estado_fenologico: String = "",
 
-    val densidadFollaje: String = "",
-    val colorFollaje: String = "",
-    val estadoFollaje: String = "",
+    val densidad_follaje: String = "",
+    val color_follaje: String = "",
+    val estado_follaje: String = "",
 
 
     val observaciones: String = "",
-    val fechaRegistro: String = fechaActual,
-    val horaRegistro: String = horaActual,
-    val estadoConexion: Boolean = true,
+
+    val fecha_registro: String = fechaActual,
+    val hora_registro: String = horaActual,
+
+    val estado: Boolean = true,
 
     val localizacion: String = "",
     val imagenUri: String = ""

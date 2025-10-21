@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface FormularioDao {
 
     // CAMBIO: Ahora devuelve un Flow para que la UI se actualice automáticamente.
-    @Query("SELECT * FROM formulario ORDER BY fechaRegistro DESC")
+    @Query("SELECT * FROM formulario ORDER BY fecha_registro DESC")
     fun getAllFormularios(): Flow<List<FormularioEntity>>
 
     @Query("SELECT * FROM formulario WHERE id = :id")

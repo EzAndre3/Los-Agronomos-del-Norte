@@ -223,7 +223,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
     var cultivos = listOf("Maíz", "Trigo", "Sorgo", "Cebada", "Avena", "Frijol", "Soya", "Caña de azúcar", "Papa", "Tomate")
     var seleccionCultivos by remember { mutableStateOf(setOf<String>()) }
 
-    var fechaSiembra by remember { mutableStateOf(TextFieldValue("")) }
+    var fecha_siembra by remember { mutableStateOf(TextFieldValue("")) }
     var errorFecha by remember { mutableStateOf(false) }
 
     Column {
@@ -305,7 +305,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
         Spacer(Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = fechaSiembra,
+            value = fecha_siembra,
             onValueChange = { input ->
                 // Filtrar solo números
                 val digits = input.text.filter { it.isDigit() }.take(8)
@@ -326,7 +326,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
                     dia !in 1..31 || mes !in 1..12
                 } else false
 
-                fechaSiembra = TextFieldValue(
+                fecha_siembra = TextFieldValue(
                     text = formatted,
                     selection = TextRange(formatted.length)
                 )

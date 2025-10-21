@@ -30,23 +30,23 @@ fun FormDetailScreen(
 
     // States for editable fields, matching FormularioEntity
     var cultivo by remember { mutableStateOf("") }
-    var fechaSiembra by remember { mutableStateOf("") }
+    var fecha_siembra by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
-    var estadoFenologico by remember { mutableStateOf("") }
-    var humedadTierra by remember { mutableStateOf("") }
+    var estado_fenologico by remember { mutableStateOf("") }
+    var humedad by remember { mutableStateOf("") }
     var ph by remember { mutableStateOf("") }
-    var alturaPlanta by remember { mutableStateOf("") }
+    var altura_planta by remember { mutableStateOf("") }
 
     // Update local states when formState is loaded
     LaunchedEffect(formState) {
         formState?.let {
             cultivo = it.cultivo
-            fechaSiembra = it.fechaSiembra
+            fecha_siembra = it.fecha_siembra
             observaciones = it.observaciones
-            estadoFenologico = it.estadoFenologico
-            humedadTierra = it.humedadTierra
+            estado_fenologico = it.estado_fenologico
+            humedad = it.humedad
             ph = it.ph
-            alturaPlanta = it.alturaPlanta
+            altura_planta = it.altura_planta
         }
     }
 
@@ -75,17 +75,17 @@ fun FormDetailScreen(
             ) {
                 OutlinedTextField(value = cultivo, onValueChange = { cultivo = it }, label = { Text("Cultivo") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = fechaSiembra, onValueChange = { fechaSiembra = it }, label = { Text("Fecha de Siembra") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = fecha_siembra, onValueChange = { fecha_siembra = it }, label = { Text("Fecha de Siembra") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = observaciones, onValueChange = { observaciones = it }, label = { Text("Observaciones") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = estadoFenologico, onValueChange = { estadoFenologico = it }, label = { Text("Estado Fenológico") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = estado_fenologico, onValueChange = { estado_fenologico = it }, label = { Text("Estado Fenológico") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = humedadTierra, onValueChange = { humedadTierra = it }, label = { Text("Humedad de la Tierra") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = humedad, onValueChange = { humedad = it }, label = { Text("Humedad de la Tierra") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = ph, onValueChange = { ph = it }, label = { Text("PH del Suelo") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = alturaPlanta, onValueChange = { alturaPlanta = it }, label = { Text("Altura de Plantas") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = altura_planta, onValueChange = { altura_planta = it }, label = { Text("Altura de Plantas") }, modifier = Modifier.fillMaxWidth())
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -94,12 +94,12 @@ fun FormDetailScreen(
                         formState?.let {
                             val updatedForm = it.copy(
                                 cultivo = cultivo,
-                                fechaSiembra = fechaSiembra,
+                                fecha_siembra = fecha_siembra,
                                 observaciones = observaciones,
-                                estadoFenologico = estadoFenologico,
-                                humedadTierra = humedadTierra,
+                                estado_fenologico = estado_fenologico,
+                                humedad = humedad,
                                 ph = ph,
-                                alturaPlanta = alturaPlanta
+                                altura_planta = altura_planta
                             )
                             viewModel.updateForm(updatedForm)
                             onBack()
