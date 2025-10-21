@@ -351,6 +351,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepHumedad(viewModel: RegistroFormularioViewModel) {
     val context = LocalContext.current
@@ -359,10 +360,11 @@ fun StepHumedad(viewModel: RegistroFormularioViewModel) {
 
     var humedad by remember { mutableStateOf(TextFieldValue(initialHumedad)) }
     var errorHumedad by remember { mutableStateOf(false) }
+    var selectedMetodo by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(initialHumedad) {
         if (initialHumedad.isNotEmpty()) {
-            viewModel.updateHumedad(initialHumedad)
+            viewModel.updateHumedad(initialHumedad, selectedMetodo ?: "")
         }
     }
 
@@ -379,21 +381,20 @@ fun StepHumedad(viewModel: RegistroFormularioViewModel) {
         Text("Humedad del suelo", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
 
+        // Campo de humedad con validación
         OutlinedTextField(
             value = humedad,
             onValueChange = { input ->
-                // Solo aceptar dígitos y limitar a 3 caracteres
                 val digits = input.text.filter { it.isDigit() }.take(3)
                 val valor = digits.toIntOrNull() ?: 0
 
                 if (valor in 0..100) {
-                    // Cursor siempre al final
                     humedad = TextFieldValue(
                         text = digits,
                         selection = TextRange(digits.length)
                     )
                     errorHumedad = false
-                    viewModel.updateHumedad(digits) // ✅ actualiza el ViewModel
+                    viewModel.updateHumedad(digits, selectedMetodo ?: "")
                 } else {
                     errorHumedad = true
                 }
@@ -408,10 +409,43 @@ fun StepHumedad(viewModel: RegistroFormularioViewModel) {
                     Text("El valor debe estar entre 0% y 100%", color = Color.Red, fontSize = 12.sp)
             }
         )
+
+        Spacer(Modifier.height(20.dp))
+        Text("¿Qué método utilizó para medir la humedad?", fontSize = 16.sp)
+        Spacer(Modifier.height(8.dp))
+
+        val metodos = listOf("Sensor de Humedad", "Medición Manual")
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            metodos.forEach { tipo ->
+                val isSelected = selectedMetodo == tipo
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            selectedMetodo = tipo
+                            viewModel.updateHumedad(humedad.text, tipo)
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) Color(0xFF33691E) else Color(0xFFF4FBE8)
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        text = tipo,
+                        modifier = Modifier.padding(16.dp),
+                        color = if (isSelected) Color.White else Color.Black
+                    )
+                }
+            }
+        }
     }
 }
 
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepPH(viewModel: RegistroFormularioViewModel) {
     val context = LocalContext.current
@@ -419,7 +453,8 @@ fun StepPH(viewModel: RegistroFormularioViewModel) {
     val initialPh = remember { sharedPreferences.getString("PH del suelo", "") ?: "" }
 
     var ph by remember { mutableStateOf(TextFieldValue(initialPh)) }
-    var selectedMedidor by remember { mutableStateOf<String?>(null) } // Guarda el tipo de medidor
+    var selectedMedidor by remember { mutableStateOf<String?>(null) }
+    var errorPh by remember { mutableStateOf(false) }
 
     LaunchedEffect(initialPh) {
         if (initialPh.isNotEmpty()) {
@@ -431,21 +466,39 @@ fun StepPH(viewModel: RegistroFormularioViewModel) {
         Text("Nivel del pH", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(8.dp))
         Text(
-            "Indique el nivel de pH del suelo. Si tiene dudas, especifique el tipo de medición que utilizó y siga las instrucciones correspondientes.",
+            "Indique el nivel de pH del suelo (0–14). Si tiene dudas, especifique el tipo de medición utilizada.",
             color = Color.Gray,
             fontSize = 14.sp
         )
         Spacer(Modifier.height(16.dp))
 
+        // Campo de pH con validación
         OutlinedTextField(
             value = ph,
-            onValueChange = {
-                ph = it
-                viewModel.updatePH(it.text, selectedMedidor ?: "")
+            onValueChange = { input ->
+                val digits = input.text.filter { it.isDigit() }.take(2)
+                val valor = digits.toIntOrNull() ?: 0
+
+                if (valor in 0..14) {
+                    ph = TextFieldValue(
+                        text = digits,
+                        selection = TextRange(digits.length)
+                    )
+                    errorPh = false
+                    viewModel.updatePH(digits, selectedMedidor ?: "")
+                } else {
+                    errorPh = true
+                }
             },
             label = { Text("Nivel de pH (0-14)") },
+            isError = errorPh,
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
+            shape = RoundedCornerShape(10.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            supportingText = {
+                if (errorPh)
+                    Text("El valor debe estar entre 0 y 14", color = Color.Red, fontSize = 12.sp)
+            }
         )
 
         Spacer(Modifier.height(20.dp))
@@ -481,6 +534,7 @@ fun StepPH(viewModel: RegistroFormularioViewModel) {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepAltura(viewModel: RegistroFormularioViewModel) {
@@ -489,12 +543,12 @@ fun StepAltura(viewModel: RegistroFormularioViewModel) {
     val initialAltura = remember { sharedPreferences.getString("Altura de plantas", "") ?: "" }
 
     var altura by remember { mutableStateOf(TextFieldValue(initialAltura)) }
-    var metodo by remember { mutableStateOf("Seleccione un método") }
-    var expandedMetodo by remember { mutableStateOf(false) }
+    var selectedMetodo by remember { mutableStateOf<String?>(null) }
+    var errorAltura by remember { mutableStateOf(false) }
 
     LaunchedEffect(initialAltura) {
         if (initialAltura.isNotEmpty()) {
-            viewModel.updateAltura(initialAltura, metodo)
+            viewModel.updateAltura(initialAltura, selectedMetodo ?: "")
         }
     }
 
@@ -519,51 +573,60 @@ fun StepAltura(viewModel: RegistroFormularioViewModel) {
         // ------------------------
         OutlinedTextField(
             value = altura,
-            onValueChange = {
-                altura = it
-                viewModel.updateAltura(altura.text, metodo)
+            onValueChange = { input ->
+                // Solo dígitos hasta 3 caracteres
+                val digits = input.text.filter { it.isDigit() }.take(3)
+                val valor = digits.toIntOrNull() ?: 0
+
+                if (valor in 0..500) { // rango razonable de alturas
+                    altura = TextFieldValue(
+                        text = digits,
+                        selection = TextRange(digits.length)
+                    )
+                    errorAltura = false
+                    viewModel.updateAltura(digits, selectedMetodo ?: "")
+                } else {
+                    errorAltura = true
+                }
             },
             label = { Text("Altura registrada (cm)") },
+            isError = errorAltura,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            supportingText = {
+                if (errorAltura)
+                    Text("La altura debe estar entre 0 y 500 cm", color = Color.Red, fontSize = 12.sp)
+            }
         )
 
-        Spacer(Modifier.height(16.dp))
-        Text("Método de medición", fontSize = 16.sp)
+        Spacer(Modifier.height(20.dp))
+        Text("¿Qué método utilizó para medir la altura?", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
 
+        // ------------------------
+        // Método de medición (formato igual que PH y Humedad)
+        // ------------------------
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            metodos.forEach { tipo ->
+                val isSelected = selectedMetodo == tipo
 
-        ExposedDropdownMenuBox(
-            expanded = expandedMetodo,
-            onExpandedChange = { expandedMetodo = !expandedMetodo }
-        ) {
-            OutlinedTextField(
-                value = metodo,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Seleccione un método") },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMetodo)
-                }
-            )
-
-            ExposedDropdownMenu(
-                expanded = expandedMetodo,
-                onDismissRequest = { expandedMetodo = false }
-            ) {
-                metodos.forEach {
-                    DropdownMenuItem(
-                        text = { Text(it) },
-                        onClick = {
-                            metodo = it
-                            expandedMetodo = false
-                            viewModel.updateAltura(altura.text, it)
-                        }
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            selectedMetodo = tipo
+                            viewModel.updateAltura(altura.text, tipo)
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) Color(0xFF33691E) else Color(0xFFF4FBE8)
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        text = tipo,
+                        modifier = Modifier.padding(16.dp),
+                        color = if (isSelected) Color.White else Color.Black
                     )
                 }
             }

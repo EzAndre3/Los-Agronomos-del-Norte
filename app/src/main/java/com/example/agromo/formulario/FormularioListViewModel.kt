@@ -22,8 +22,8 @@ class RegistroFormularioViewModel(private val repository: FormularioRepository) 
         _formulario.value = _formulario.value.copy(fecha_siembra = value)
     }
 
-    fun updateHumedad(value: String) {
-        _formulario.value = _formulario.value.copy(humedad = value)
+    fun updateHumedad(value: String, metodo: String) {
+        _formulario.value = _formulario.value.copy(humedad = value, metodo_humedad = metodo)
     }
 
     fun updatePH(value: String, metodo: String) {
