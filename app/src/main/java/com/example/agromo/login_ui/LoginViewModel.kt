@@ -24,7 +24,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     var username by mutableStateOf("")
         private set
 
-
     private val sessionManager = SessionManager(application.applicationContext)
 
     init {
@@ -65,16 +64,20 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     val usernameBackend = response.body()?.user?.username ?: ""
                     username = usernameBackend
 
-                    // Solo guardar sesión completa si "Recuérdame" está activo
+                    // ✅ Guardar token y sesión de forma consistente
                     if (rememberMe) {
                         sessionManager.saveToken(token)
                         sessionManager.saveEmail(email)
                     } else {
-                        sessionManager.clearSession()
+                        // Si no se selecciona "Recuérdame", aún guardamos token temporal
+                        sessionManager.saveToken(token)
+                        sessionManager.clearEmail()
                     }
-                    sessionManager.saveEmail(email)
+
+                    // ✅ Siempre guardar username (no afecta la sesión)
                     sessionManager.saveUsername(usernameBackend)
 
+                    Log.d("LOGIN", "Token guardado: $token")
                     loginMessage = "Inicio de sesión exitoso"
                     loginMessageColor = Color(0xFF317C42)
                     isLoginSuccessful = true

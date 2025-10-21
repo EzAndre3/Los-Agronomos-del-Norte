@@ -94,7 +94,8 @@ fun DashboardScreen(
             onAvatarClick = onNavigateToProfile,
             saludo = saludo,
             presentacion = presentacion,
-            avatarText = avatarText
+            avatarText = avatarText,
+            onSyncClick = { viewModel.startSync(context) }
         )
 
         LazyColumn(
@@ -194,7 +195,8 @@ fun TopBarSection(
     onAvatarClick: () -> Unit,
     saludo: String,
     presentacion: String,
-    avatarText: String
+    avatarText: String,
+    onSyncClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -240,12 +242,15 @@ fun TopBarSection(
             }
         }
 
-        Icon(
-            imageVector = Icons.Default.Sync,
-            contentDescription = "Sincronizar",
-            tint = ColorBlackWhiteBlack,
-            modifier = Modifier.size(24.dp)
-        )
+        IconButton(onClick = { onSyncClick() }) {
+            Icon(
+                imageVector = Icons.Default.Sync,
+                contentDescription = "Sincronizar",
+                tint = ColorBlackWhiteBlack,
+                modifier = Modifier.size(40.dp)
+            )
+        }
+
     }
 }
 

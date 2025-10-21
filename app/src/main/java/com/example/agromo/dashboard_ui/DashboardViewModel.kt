@@ -1,6 +1,7 @@
 package com.example.agromo.dashboard_ui
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.agromo.data.FormularioDao
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import android.location.Location
 import com.example.agromo.network.SessionManager
+import com.example.agromo.network.SyncRepository
 import kotlinx.coroutines.withContext
 
 
@@ -35,7 +37,12 @@ class DashboardViewModel(application: Application, private val formularioDao: Fo
             initialValue = emptyList()
         )
 
-
+    fun startSync(context: Context) {
+        viewModelScope.launch {
+            val formulariosList = formularios.value
+            SyncRepository.syncFormularios(context, formulariosList)
+        }
+    }
 
     fun reloadUserInfo() {
         val email = sessionManager.getSavedEmail() ?: ""
