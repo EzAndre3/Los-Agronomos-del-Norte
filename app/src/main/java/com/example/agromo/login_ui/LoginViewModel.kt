@@ -69,10 +69,12 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                         sessionManager.saveToken(token)
                         sessionManager.saveEmail(email)
                     } else {
+                        sessionManager.clearSession()
                         // Si no se selecciona "Recuérdame", aún guardamos token temporal
                         sessionManager.saveToken(token)
                         sessionManager.clearEmail()
                     }
+                    sessionManager.saveEmail(email)
 
                     // ✅ Siempre guardar username (no afecta la sesión)
                     sessionManager.saveUsername(usernameBackend)
