@@ -2,16 +2,18 @@ package com.example.agromo.dashboard_ui.quickvalues
 
 import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.agromo.login_ui.components.TextFieldOutlined
@@ -61,18 +63,54 @@ fun EditValueScreen(
                 Spacer(Modifier.height(22.dp))
 
                 if (options != null) {
-                    // Initialize value with the first option if it's empty
                     if (value.isEmpty() && options.isNotEmpty()) {
                         value = options.first()
                     }
                     RadioGroup(options = options, selectedOption = value, onOptionSelected = { value = it })
                 } else {
+                    val isNumericField = key in listOf("PH del suelo", "Humedad del suelo", "Altura de plantas")
+
                     TextFieldOutlined(
                         value = value,
-                        onValueChange = { value = it },
+                        onValueChange = { newValue ->
+                            if (isNumericField) {
+                                if (newValue.matches(Regex("^\\d*\\.?\\d*\$"))) {
+                                    val numeric = newValue.toFloatOrNull()
+                                    val isValid = when (key) {
+                                        "PH del suelo" -> numeric == null || (numeric in 1f..14f)
+                                        "Humedad del suelo" -> numeric == null || (numeric in 0f..100f)
+                                        "Altura de plantas" -> true
+                                        else -> true
+                                    }
+                                    if (isValid) value = newValue
+                                }
+                            } else {
+                                value = newValue
+                            }
+                        },
                         label = key,
-                        placeholder = "Nuevo valor"
+                        placeholder = when (key) {
+                            "PH del suelo" -> "Ingresa un valor entre 1 y 14"
+                            "Humedad del suelo" -> "Ingresa un valor entre 0 y 100"
+                            "Altura de plantas" -> "Ingresa una altura numérica"
+                            else -> "Nuevo valor"
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = if (isNumericField) KeyboardType.Number else KeyboardType.Text
+                        ),
+                        isError = when (key) {
+                            "PH del suelo" -> value.toFloatOrNull()?.let { it < 1 || it > 14 } ?: false
+                            "Humedad del suelo" -> value.toFloatOrNull()?.let { it < 0 || it > 100 } ?: false
+                            else -> false
+                        }
                     )
+
+                    when (key) {
+                        "PH del suelo" -> if (value.toFloatOrNull()?.let { it < 1 || it > 14 } == true)
+                            Text("El valor debe ser entre 1 y 14", color = Color.Red, fontSize = 12.sp)
+                        "Humedad del suelo" -> if (value.toFloatOrNull()?.let { it < 0 || it > 100 } == true)
+                            Text("El valor debe ser entre 0 y 100", color = Color.Red, fontSize = 12.sp)
+                    }
                 }
 
                 Spacer(Modifier.height(18.dp))

@@ -1,5 +1,7 @@
 package com.example.agromo.form_detail_ui
 
+import android.app.Activity
+import android.view.WindowManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,10 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.agromo.data.AppDatabase
@@ -28,6 +31,14 @@ fun FormDetailScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val view = LocalView.current
+
+    // 👇 Fuerza que el teclado se superponga (no mueva nada)
+    LaunchedEffect(Unit) {
+        val activity = context as? Activity
+        activity?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+    }
+
     val db = AppDatabase.getDatabase(context)
     val formularioDao = db.formularioDao()
     val viewModel: FormDetailViewModel = viewModel(factory = FormDetailViewModelFactory(formularioDao, formId))
@@ -77,12 +88,11 @@ fun FormDetailScreen(
             )
         },
         bottomBar = {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .imePadding()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
                     onClick = {
@@ -103,16 +113,20 @@ fun FormDetailScreen(
                             onBack()
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
                 ) {
-                    Text("Guardar Cambios")
+                    Text("Guardar")
                 }
                 Button(
                     onClick = { showDeleteDialog = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF24B43)),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
                 ) {
-                    Text("Eliminar formulario", color = Color.White)
+                    Text("Eliminar", color = Color.White)
                 }
             }
         }
@@ -125,14 +139,13 @@ fun FormDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .imePadding()
                     .padding(padding)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp, 0.dp, 16.dp, 260.dp) 
+                        .padding(16.dp, 0.dp, 16.dp, 32.dp)
                 ) {
                     OutlinedTextField(value = cultivo, onValueChange = { cultivo = it }, label = { Text("Cultivo") }, modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(8.dp))

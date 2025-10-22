@@ -1,6 +1,7 @@
 package com.example.agromo.login_ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,7 +16,9 @@ fun TextFieldOutlined(
     onValueChange: (String) -> Unit,
     label: String,
     placeholder: String = "",
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    isError: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
@@ -23,6 +26,8 @@ fun TextFieldOutlined(
         label = { Text(label) },
         placeholder = { Text(placeholder) },
         singleLine = true,
+        keyboardOptions = keyboardOptions,
+        isError = isError,
         modifier = modifier.fillMaxWidth(),
         textStyle = TextStyle(
             color = Color.Black,
