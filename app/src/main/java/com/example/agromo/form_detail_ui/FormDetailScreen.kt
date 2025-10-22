@@ -125,6 +125,7 @@ fun FormDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imePadding() 
                     .padding(padding)
             ) {
                 Column(
