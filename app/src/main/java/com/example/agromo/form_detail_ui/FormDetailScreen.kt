@@ -48,6 +48,7 @@ fun FormDetailScreen(
     var humedadError by remember { mutableStateOf<String?>(null) }
     var phError by remember { mutableStateOf<String?>(null) }
     var errorFecha by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(formState) {
         formState?.let {
@@ -74,104 +75,15 @@ fun FormDetailScreen(
                     }
                 }
             )
-        }
-    ) { padding ->
-        if (formState == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
+        },
+        bottomBar = {
             Column(
                 modifier = Modifier
-                    .padding(padding)
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
+                    .fillMaxWidth()
+                    .imePadding()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedTextField(value = cultivo, onValueChange = { cultivo = it }, label = { Text("Cultivo") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = fecha_siembra,
-                    onValueChange = { input ->
-                        val digits = input.text.filter { it.isDigit() }.take(8)
-                        val formatted = when (digits.length) {
-                            in 1..2 -> digits
-                            in 3..4 -> "${digits.take(2)}/${digits.drop(2)}"
-                            in 5..8 -> "${digits.take(2)}/${digits.drop(2).take(2)}/${digits.drop(4)}"
-                            else -> digits
-                        }
-                        val partes = formatted.split("/")
-                        errorFecha = if (partes.size == 3 && partes[2].length == 4) {
-                            val dia = partes[0].toIntOrNull() ?: 0
-                            val mes = partes[1].toIntOrNull() ?: 0
-                            dia !in 1..31 || mes !in 1..12
-                        } else false
-                        fecha_siembra = TextFieldValue(
-                            text = formatted,
-                            selection = TextRange(formatted.length)
-                        )
-                    },
-                    label = { Text("Fecha de Siembra (dd/mm/aaaa)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = errorFecha,
-                    shape = RoundedCornerShape(10.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    supportingText = {
-                        if (errorFecha)
-                            Text("Fecha inválida", color = Color.Red, fontSize = 12.sp)
-                    }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(value = observaciones, onValueChange = { observaciones = it }, label = { Text("Observaciones") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = estado_fenologico, onValueChange = { estado_fenologico = it }, label = { Text("Estado Fenológico") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = humedad,
-                    onValueChange = { value ->
-                        humedad = value
-                        val num = value.toFloatOrNull()
-                        humedadError = if (value.isNotBlank() && (num == null || num < 0 || num > 100)) {
-                            "El valor debe estar entre 0% y 100%"
-                        } else null
-                    },
-                    label = { Text("Humedad de la Tierra") },
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = humedadError != null
-                )
-                if (humedadError != null) {
-                    Text(humedadError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = ph,
-                    onValueChange = { value ->
-                        ph = value
-                        val num = value.toFloatOrNull()
-                        phError = if (value.isNotBlank() && (num == null || num < 0 || num > 14)) {
-                            "El valor debe estar entre 0 y 14"
-                        } else null
-                    },
-                    label = { Text("PH del Suelo") },
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = phError != null
-                )
-                if (phError != null) {
-                    Text(phError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(value = altura_planta, onValueChange = { altura_planta = it }, label = { Text("Altura de Plantas") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = densidad_follaje, onValueChange = { densidad_follaje = it }, label = { Text("Densidad de Follaje") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = color_follaje, onValueChange = { color_follaje = it }, label = { Text("Color del Follaje") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = estado_follaje, onValueChange = { estado_follaje = it }, label = { Text("Estado del Follaje") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Button(
                     onClick = {
                         formState?.let {
@@ -195,16 +107,114 @@ fun FormDetailScreen(
                 ) {
                     Text("Guardar Cambios")
                 }
-                var showDeleteDialog by remember { mutableStateOf(false) }
-
                 Button(
                     onClick = { showDeleteDialog = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF24B43)), // Rojo
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF24B43)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Eliminar formulario", color = Color.White)
+                }
+            }
+        }
+    ) { padding ->
+        if (formState == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp, 0.dp, 16.dp, 32.dp)
+                ) {
+                    OutlinedTextField(value = cultivo, onValueChange = { cultivo = it }, label = { Text("Cultivo") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = fecha_siembra,
+                        onValueChange = { input ->
+                            val digits = input.text.filter { it.isDigit() }.take(8)
+                            val formatted = when (digits.length) {
+                                in 1..2 -> digits
+                                in 3..4 -> "${digits.take(2)}/${digits.drop(2)}"
+                                in 5..8 -> "${digits.take(2)}/${digits.drop(2).take(2)}/${digits.drop(4)}"
+                                else -> digits
+                            }
+                            val partes = formatted.split("/")
+                            errorFecha = if (partes.size == 3 && partes[2].length == 4) {
+                                val dia = partes[0].toIntOrNull() ?: 0
+                                val mes = partes[1].toIntOrNull() ?: 0
+                                dia !in 1..31 || mes !in 1..12
+                            } else false
+                            fecha_siembra = TextFieldValue(
+                                text = formatted,
+                                selection = TextRange(formatted.length)
+                            )
+                        },
+                        label = { Text("Fecha de Siembra (dd/mm/aaaa)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = errorFecha,
+                        shape = RoundedCornerShape(10.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        supportingText = {
+                            if (errorFecha)
+                                Text("Fecha inválida", color = Color.Red, fontSize = 12.sp)
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(value = observaciones, onValueChange = { observaciones = it }, label = { Text("Observaciones") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = estado_fenologico, onValueChange = { estado_fenologico = it }, label = { Text("Estado Fenológico") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = humedad,
+                        onValueChange = { value ->
+                            humedad = value
+                            val num = value.toFloatOrNull()
+                            humedadError = if (value.isNotBlank() && (num == null || num < 0 || num > 100)) {
+                                "El valor debe estar entre 0% y 100%"
+                            } else null
+                        },
+                        label = { Text("Humedad de la Tierra") },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = humedadError != null
+                    )
+                    if (humedadError != null) {
+                        Text(humedadError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = ph,
+                        onValueChange = { value ->
+                            ph = value
+                            val num = value.toFloatOrNull()
+                            phError = if (value.isNotBlank() && (num == null || num < 0 || num > 14)) {
+                                "El valor debe estar entre 0 y 14"
+                            } else null
+                        },
+                        label = { Text("PH del Suelo") },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = phError != null
+                    )
+                    if (phError != null) {
+                        Text(phError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(value = altura_planta, onValueChange = { altura_planta = it }, label = { Text("Altura de Plantas") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = densidad_follaje, onValueChange = { densidad_follaje = it }, label = { Text("Densidad de Follaje") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = color_follaje, onValueChange = { color_follaje = it }, label = { Text("Color del Follaje") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = estado_follaje, onValueChange = { estado_follaje = it }, label = { Text("Estado del Follaje") }, modifier = Modifier.fillMaxWidth())
                 }
 
                 if (showDeleteDialog) {
