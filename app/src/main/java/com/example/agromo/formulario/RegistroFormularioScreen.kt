@@ -665,30 +665,20 @@ fun StepAltura(viewModel: RegistroFormularioViewModel) {
         OutlinedTextField(
             value = altura,
             onValueChange = { input ->
-                // Solo dígitos hasta 3 caracteres
-                val digits = input.text.filter { it.isDigit() }.take(3)
-                val valor = digits.toIntOrNull() ?: 0
+                // Solo se conservan dígitos, sin límite de longitud
+                val digits = input.text.filter { it.isDigit() }
 
-                if (valor in 0..500) { // rango razonable de alturas
-                    altura = TextFieldValue(
-                        text = digits,
-                        selection = TextRange(digits.length)
-                    )
-                    errorAltura = false
-                    viewModel.updateAltura(digits, selectedMetodo ?: "")
-                } else {
-                    errorAltura = true
-                }
+                altura = TextFieldValue(
+                    text = digits,
+                    selection = TextRange(digits.length)
+                )
+                viewModel.updateAltura(digits, selectedMetodo ?: "")
             },
             label = { Text("Altura registrada (cm)") },
             isError = errorAltura,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            supportingText = {
-                if (errorAltura)
-                    Text("La altura debe estar entre 0 y 500 cm", color = Color.Red, fontSize = 12.sp)
-            }
         )
 
         Spacer(Modifier.height(20.dp))
