@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -97,7 +98,7 @@ fun DashboardScreen(
             avatarText = avatarText,
             onSyncClick = { viewModel.startSync(context, formularioDao) }
         )
-
+        val formulariosOrdenados = formularios.sortedByDescending { it.estado } // true (no sincronizado) arriba
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -146,16 +147,26 @@ fun DashboardScreen(
                     )
                 }
             } else {
-                items(formularios) { formulario ->
+                items(formulariosOrdenados) { formulario ->
+                    val (statusText, statusColor) = if (formulario.estado) {
+                        "No sincronizado" to Color(0xFFF9A825) // Amarillo, TRUE = pendiente/local
+                    } else {
+                        "Sincronizado" to Color(0xFF388E3C)    // Verde, FALSE = sincronizado
+                    }
+
                     val cropIcon = getCropIcon(formulario.cultivo)
+
                     ReportCard(
-                        date = formulario.cultivo, // Using 'cultivo' for date for now
+                        date = formulario.cultivo,
                         cropType = formulario.cultivo,
                         cropIcon = cropIcon,
                         title = "Informe de ${formulario.cultivo}",
-                        status = "Completo", // Placeholder status
-                        statusColor = Primary600Intermediary,
-                        onClick = { onNavigateToFormDetail(formulario.id.toString()) }
+                        status = statusText,
+                        statusColor = statusColor,
+                        onClick = if (formulario.estado) {
+                            { onNavigateToFormDetail(formulario.id.toString()) }
+                        } else null
+
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
@@ -647,12 +658,16 @@ fun ReportCard(
     title: String,
     status: String,
     statusColor: Color,
-    onClick: () -> Unit = {}
+    onClick: (() -> Unit)? = null
 ) {
+    val isClickable = onClick != null
+    val mutedText = if (!isClickable) Color.Gray else ColorBlackWhiteBlack
+    val mutedIconAlpha = if (!isClickable) 0.35f else 1f
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .then(if (isClickable) Modifier.clickable(onClick = onClick!!) else Modifier),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Neutral50),
         border = androidx.compose.foundation.BorderStroke(1.dp, Primary800P)
@@ -671,7 +686,8 @@ fun ReportCard(
                 Box(
                     modifier = Modifier
                         .size(68.dp)
-                        .background(Primary300, RoundedCornerShape(8.dp)),
+                        .background(Primary300, RoundedCornerShape(8.dp))
+                        .alpha(mutedIconAlpha),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -690,7 +706,7 @@ fun ReportCard(
                         Text(
                             text = date,
                             fontSize = 12.sp,
-                            color = ColorBlackWhiteBlack
+                            color = mutedText
                         )
                     }
 
@@ -698,9 +714,10 @@ fun ReportCard(
                         text = title,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = ColorBlackWhiteBlack
+                        color = mutedText
                     )
 
+                    // NO se opaca el badge de estado
                     Box(
                         modifier = Modifier
                             .background(statusColor.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
@@ -717,15 +734,20 @@ fun ReportCard(
                 }
             }
 
-            Icon(
-                imageVector = Icons.Filled.ChevronRight,
-                contentDescription = "Ir al informe",
-                tint = ColorBlackWhiteBlack,
-                modifier = Modifier.size(24.dp)
-            )
+            if (isClickable) {
+                Icon(
+                    imageVector = Icons.Filled.ChevronRight,
+                    contentDescription = "Ir al informe",
+                    tint = ColorBlackWhiteBlack,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }
+
+
+
 private fun initialsOf(nombre: String?, username: String): String {
     val parts = nombre?.trim()?.split(" ")?.filter { it.isNotBlank() } ?: emptyList()
     return if (parts.size >= 2) {

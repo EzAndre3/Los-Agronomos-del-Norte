@@ -312,7 +312,7 @@ fun Double.format(digits: Int) = "%.${digits}f".format(this)
 fun StepVariedad(viewModel: RegistroFormularioViewModel) {
     var cultivoQuery by remember { mutableStateOf(TextFieldValue("")) }
     var cultivos = listOf("Maíz", "Trigo", "Sorgo", "Cebada", "Avena", "Frijol", "Soya", "Caña de azúcar", "Papa", "Tomate")
-    var seleccionCultivos by remember { mutableStateOf(setOf<String>()) }
+    var cultivoSeleccionado by remember  { mutableStateOf<String?>(null) }
 
     var fecha_siembra by remember { mutableStateOf(TextFieldValue("")) }
     var errorFecha by remember { mutableStateOf(false) }
@@ -320,7 +320,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
     Column {
         Text("Información general del cultivo", fontSize = 20.sp, color = Color(0xFF1B1B1B))
         Spacer(Modifier.height(4.dp))
-        Text("¿Qué cultivo y variedad tiene sembrado?", color = Color.Gray, fontSize = 14.sp)
+        Text("¿Qué cultivo tiene sembrado?", color = Color.Gray, fontSize = 14.sp)
         Spacer(Modifier.height(20.dp))
 
         // Card decorativa (puedes añadir más detalles aquí si lo necesitas)
@@ -330,7 +330,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
             shape = RoundedCornerShape(12.dp)
         ) {
             Box(Modifier.padding(16.dp)) {
-                Text("Anota la fecha de la siembra y selecciona uno o varios cultivos de la lista.")
+                Text("Anota la fecha de la siembra y selecciona uno de los cultivos de la lista.")
             }
         }
 
@@ -382,7 +382,7 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
         )
 
         Spacer(Modifier.height(20.dp))
-        Text("Variedad Cultivada", fontSize = 16.sp)
+        Text("Cultivo", fontSize = 16.sp)
         Spacer(Modifier.height(8.dp))
 
         OutlinedTextField(
@@ -406,30 +406,25 @@ fun StepVariedad(viewModel: RegistroFormularioViewModel) {
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             cultivosFiltrados.forEach { c ->
-                val isSelected = seleccionCultivos.contains(c)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            seleccionCultivos =
-                                if (isSelected) seleccionCultivos - c else seleccionCultivos + c
-                            // ✅ Actualiza cultivo al seleccionar
-                            viewModel.updateCultivo(c)
+                            cultivoSeleccionado = c
+                            viewModel.updateCultivo(c) // Actualiza el cultivo en el ViewModel
                         }
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Checkbox(
-                        checked = isSelected,
-                        onCheckedChange = {
-                            seleccionCultivos =
-                                if (isSelected) seleccionCultivos - c else seleccionCultivos + c
+                    RadioButton(
+                        selected = cultivoSeleccionado == c,
+                        onClick = {
+                            cultivoSeleccionado = c
                             viewModel.updateCultivo(c)
                         },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = verdeBoton,
-                            uncheckedColor = Color.Gray,
-                            checkmarkColor = Color.White
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = verdeBoton,
+                            unselectedColor = Color.Gray
                         )
                     )
                     Spacer(Modifier.width(8.dp))
