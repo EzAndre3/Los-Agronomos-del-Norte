@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class FormDetailViewModel(private val formularioDao: FormularioDao, private val formId: String) : ViewModel() {
+class FormDetailViewModel(
+    private val formularioDao: FormularioDao,
+    private val formId: String
+) : ViewModel() {
 
     private val _formState = MutableStateFlow<FormularioEntity?>(null)
     val formState: StateFlow<FormularioEntity?> = _formState.asStateFlow()
@@ -23,6 +26,12 @@ class FormDetailViewModel(private val formularioDao: FormularioDao, private val 
     fun updateForm(formulario: FormularioEntity) {
         viewModelScope.launch {
             formularioDao.updateFormulario(formulario)
+        }
+    }
+
+    fun deleteForm(formulario: FormularioEntity) {
+        viewModelScope.launch {
+            formularioDao.deleteFormulario(formulario)
         }
     }
 }
